@@ -1,9 +1,13 @@
 ﻿# Secrets
-.env
-*.env
+Backend/.env
+**/.env
+**/*.env
 
-# Python/venv
+# Python venv
 Backend/my_env/
+Backend/my_env/**
+
+# Python cache
 __pycache__/
 *.pyc
 
