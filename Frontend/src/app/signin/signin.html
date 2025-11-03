@@ -1,0 +1,29 @@
+<auth-layout>
+  <h2 class="title">Welcome back</h2>
+
+  <form [formGroup]="form" (ngSubmit)="submit()" class="form">
+    <div class="row">
+      <label>Username *</label>
+      <input type="text" formControlName="username" placeholder="Your username" />
+      <small *ngIf="submitted && form.controls['username'].errors">Required</small>
+    </div>
+
+    <div class="row">
+      <label>Password *</label>
+      <input type="password" formControlName="password" placeholder="Your password" />
+      <small *ngIf="submitted && form.controls['password'].errors">Required</small>
+    </div>
+
+    <button class="cta" type="submit" [disabled]="loading">
+      {{ loading ? 'Signing in...' : 'Sign in' }}
+    </button>
+
+    <p class="switch">Don’t have an account? <a routerLink="/signup">Create one</a></p>
+
+    <p *ngIf="needsVerification" class="hint">
+      Email not verified. <a (click)="resend()" role="button">Resend verification email</a>
+    </p>
+
+    <small *ngIf="error" style="color:#ffb3c1">{{ error }}</small>
+  </form>
+</auth-layout>

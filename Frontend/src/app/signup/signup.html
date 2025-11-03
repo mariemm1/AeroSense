@@ -1,0 +1,46 @@
+<auth-layout>
+  <h2 class="title">Create your AeroSense account</h2>
+
+  <form [formGroup]="form" (ngSubmit)="submit()" class="form">
+    <div class="row">
+      <label>Full name *</label>
+      <input type="text" formControlName="full_name" placeholder="Jane Doe" />
+      <small *ngIf="submitted && form.controls['full_name'].errors">Name is required</small>
+    </div>
+
+    <div class="row">
+      <label>What you do *</label>
+      <input type="text" formControlName="what_he_does" placeholder="Researcher / Student / Engineer" />
+      <small *ngIf="submitted && form.controls['what_he_does'].errors">Required</small>
+    </div>
+
+    <div class="row">
+      <label>Region *</label>
+      <input type="text" formControlName="region" placeholder="City / Region" />
+      <small *ngIf="submitted && form.controls['region'].errors">Required</small>
+    </div>
+
+    <div class="row">
+      <label>Email *</label>
+      <input type="email" formControlName="email" placeholder="you@example.com" />
+      <small *ngIf="submitted && form.controls['email'].errors">Valid email required</small>
+    </div>
+
+    <div class="row">
+      <label>Password *</label>
+      <input type="password" formControlName="password" placeholder="At least 6 characters" />
+      <small *ngIf="submitted && form.controls['password'].errors">Min length 6</small>
+    </div>
+
+    <button class="cta" type="submit" [disabled]="loading">
+      {{ loading ? 'Creating...' : 'Create account' }}
+    </button>
+
+    <p class="switch">
+      Already registered?
+      <a class="link-btn" routerLink="/signin">Login</a>
+    </p>
+
+    <small *ngIf="error" style="color:#ffb3c1">{{ error }}</small>
+  </form>
+</auth-layout>
