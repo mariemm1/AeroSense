@@ -1,0 +1,11 @@
+﻿# Secrets
+.env
+*.env
+
+# Python/venv
+Backend/my_env/
+__pycache__/
+*.pyc
+
+# DBs
+*.sqlite3
