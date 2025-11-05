@@ -1,0 +1,22 @@
+<svg width="200" height="60" viewBox="0 0 200 60" xmlns="http://www.w3.org/2000/svg">
+  <!-- Icône Sensor Air -->
+  <g fill="none" stroke="#007bff" stroke-width="2">
+    <circle cx="25" cy="30" r="10" fill="#28a745" opacity="0.8"/>
+    <path d="M15 30 Q25 20 35 30 Q25 40 15 30" stroke="#007bff"/>
+    <circle cx="35" cy="25" r="1" fill="#007bff"/>
+    <circle cx="35" cy="35" r="1" fill="#007bff"/>
+  </g>
+  
+  <!-- Texte AeroSense -->
+  <text x="50" y="35" font-family="Inter, Roboto, sans-serif" font-size="24" font-weight="700" fill="#333">
+    Aero
+  </text>
+  <text x="100" y="35" font-family="Inter, Roboto, sans-serif" font-size="24" font-weight="700" fill="#28a745">
+    Sense
+  </text>
+  
+  <!-- Tagline subtile -->
+  <text x="50" y="50" font-family="Inter, Roboto, sans-serif" font-size="10" fill="#666">
+    Air Quality Monitoring
+  </text>
+</svg>
