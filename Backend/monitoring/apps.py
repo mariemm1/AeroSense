@@ -6,6 +6,6 @@ class MonitoringConfig(AppConfig):
     name = 'monitoring'
 
     def ready(self):
-        # ensure Mongo connects when Django starts
+        #ensure Mongo connects when Django starts
         from atmospheric_gases.mongo import init_mongo
         init_mongo()
