@@ -32,6 +32,8 @@
     "@angular/router": "^20.3.0",
     "@angular/ssr": "^20.3.8",
     "@auth0/angular-jwt": "^5.2.0",
+    "@nebular/eva-icons": "^16.0.0",
+    "@nebular/theme": "^16.0.0",
     "express": "^5.1.0",
     "leaflet": "^1.9.4",
     "leaflet.heat": "^0.2.0",
