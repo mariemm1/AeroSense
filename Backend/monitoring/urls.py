@@ -7,5 +7,6 @@ urlpatterns = [
     path("auth/signin/", views.signin, name="signin"),
     path("auth/verify-email/", views.verify_email, name="verify-email"),
     path("auth/resend-verification/", views.resend_verification, name="resend-verification"),
-    
+    # Contact
+    path('api/contact/', views.contact, name='contact'),    
 ]

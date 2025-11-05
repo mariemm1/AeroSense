@@ -10,7 +10,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework import status
 
-from .models import User, slugify_username
+from .models import User, slugify_username, ContactMessage
 
 # --- JWT config ---
 JWT_SECRET = getattr(settings, "SECRET_KEY", "dev-secret-change-me")
@@ -221,3 +221,108 @@ def resend_verification(request):
 
     _send_verification_email(request, user)
     return Response({"message": "Verification email sent."})
+
+
+
+# monitoring/views.py (À LA FIN)
+
+import logging
+logger = logging.getLogger(__name__)
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def contact(request):
+    data = request.data
+
+    # --- Validation ---
+    required_fields = ["name", "email", "subject", "message"]
+    missing = [field for field in required_fields if not data.get(field)]
+    if missing:
+        return Response(
+            {"error": f"Champs manquants : {', '.join(missing)}"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    name = data["name"].strip()
+    email = data["email"].strip().lower()
+    subject = data["subject"].strip()
+    message = data["message"].strip()
+
+    if len(name) < 2:
+        return Response({"error": "Nom trop court."}, status=400)
+    if len(subject) < 5:
+        return Response({"error": "Sujet trop court."}, status=400)
+    if len(message) < 10:
+        return Response({"error": "Message trop court."}, status=400)
+    if "@" not in email or "." not in email:
+        return Response({"error": "Email invalide."}, status=400)
+
+    # --- SAUVEGARDE MONGODB ---
+    try:
+        contact_msg = ContactMessage(
+            name=name,
+            email=email,
+            subject=subject,
+            message=message,
+            is_read=False
+        )
+        contact_msg.save()
+        logger.info(f"Message sauvegardé | ID: {contact_msg.id}")
+    except Exception as e:
+        logger.error(f"ÉCHEC SAUVEGARDE: {e}")
+        return Response({"error": "Échec sauvegarde"}, status=500)
+
+    # --- EMAIL À AEROSENSE ---
+    try:
+        logger.info(f"Envoi à contact@aerosense.com depuis {settings.DEFAULT_FROM_EMAIL}")
+        send_mail(
+            subject=f"[AeroSense] {subject}",
+            message=f"""
+            Nouveau message de contact AeroSense
+
+            Nom: {name}
+            Email: {email}
+            Sujet: {subject}
+
+            Message:
+            {message}
+            """,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=['contact@aerosense.com'],
+            fail_silently=False,
+        )
+        logger.info("Email AeroSense envoyé")
+    except Exception as e:
+        logger.error(f"ÉCHEC EMAIL AEROSENSE: {type(e).__name__}: {str(e)}")
+
+    # --- EMAIL CONFIRMATION À L’UTILISATEUR ---
+    try:
+        logger.info(f"Envoi confirmation à {email}")
+        send_mail(
+            subject="Nous avons bien reçu votre message",
+            message=f"""
+            Bonjour {name},
+
+            Merci pour votre message !
+
+            Nous avons bien reçu votre demande :
+            "{subject}"
+
+            Nous vous répondrons sous 24h à l’adresse : {email}
+
+            À bientôt,
+            L’équipe AeroSense
+            """,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[email],
+            fail_silently=False,
+        )
+        logger.info("Email confirmation envoyé")
+    except Exception as e:
+        logger.error(f"ÉCHEC EMAIL UTILISATEUR: {type(e).__name__}: {str(e)}")
+
+    # SUCCÈS MÊME SI EMAIL ÉCHOUE
+    return Response(
+        {"detail": "Message envoyé avec succès !"},
+        status=status.HTTP_201_CREATED
+    )

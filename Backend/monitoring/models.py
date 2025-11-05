@@ -48,3 +48,16 @@ class User(Document):
 
     def check_password(self, raw_password: str) -> bool:
         return check_password(raw_password, self.password_hash)
+    
+
+class ContactMessage(Document):
+    meta = {
+        'collection': 'contact_messages',
+        'db_alias': 'default',
+    }
+    name       = StringField(required=True, max_length=100)
+    email      = EmailField(required=True)
+    subject    = StringField(required=True, max_length=200)
+    message    = StringField(required=True)
+    created_at = DateTimeField(default=datetime.utcnow)
+    is_read    = BooleanField(default=False)
