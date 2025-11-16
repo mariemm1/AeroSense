@@ -7,7 +7,7 @@ import { NgIf, isPlatformBrowser } from '@angular/common';
 @Component({
   selector: 'auth-layout',
   standalone: true,
-  imports: [NgIf],
+  imports: [],
   templateUrl: './auth-layout.html',
   styleUrls: ['./auth-layout.css'],
 })
