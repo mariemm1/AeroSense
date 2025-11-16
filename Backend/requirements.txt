@@ -1,10 +1,41 @@
+########################################
+# Django backend
+########################################
 asgiref==3.10.0
-Django==5.2.7
-djangorestframework
-django-cors-headers
-mongoengine
-python-dotenv
-PyJWT
-dnspython
+Django==5.2.8
+django-cors-headers==4.9.0
+djangorestframework==3.16.1
 sqlparse==0.5.3
 tzdata==2025.2
+
+########################################
+# MongoDB + JWT (backend + pipelines)
+########################################
+mongoengine>=0.28        # for Django models (User, ContactMessage)
+pymongo>=4.8             # used directly by the pipelines
+dnspython>=2.4
+PyJWT>=2.9               # your jwt import in auth_utils / views
+
+########################################
+# Environment / config
+########################################
+python-dotenv>=1.0       # both Django + pipelines load .env
+
+########################################
+# Copernicus pipelines: HTTP, numerics, NetCDF, GeoTIFF
+########################################
+requests>=2.31
+numpy>=1.26
+pandas>=2.2
+xarray>=2024.6
+
+# NetCDF backends for xarray (.nc reading)
+netCDF4>=1.7
+h5netcdf>=1.3
+h5py>=3.10
+
+# GeoTIFF read/write
+rasterio>=1.4
+
+# Date handling
+python-dateutil>=2.9

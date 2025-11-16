@@ -1,6 +1,9 @@
 from datetime import datetime, timedelta, timezone
-from django.shortcuts import render
-import os, jwt, secrets
+import os
+import jwt
+import secrets
+import logging
+
 from django.conf import settings
 from django.urls import reverse
 from django.core.mail import send_mail
@@ -12,6 +15,8 @@ from rest_framework import status
 
 from .models import User, slugify_username, ContactMessage
 
+logger = logging.getLogger(__name__)
+
 # --- JWT config ---
 JWT_SECRET = getattr(settings, "SECRET_KEY", "dev-secret-change-me")
 JWT_ALG = "HS256"
@@ -20,16 +25,24 @@ JWT_EXPIRES_MIN = int(os.getenv("JWT_EXPIRES_MIN", "120"))
 # --- Email verification config ---
 EMAIL_VERIFY_TTL_MIN = int(os.getenv("EMAIL_VERIFY_TTL_MIN", "60"))  # token valid minutes
 
+# --- Optional Mongo (for reading S5P/S3 stats) ---
+try:
+    from pymongo import MongoClient
+except Exception:  # pragma: no cover
+    MongoClient = None
+
 
 def _utcnow_naive():
     """Naive UTC (MongoEngine stores naive datetimes)."""
     return datetime.utcnow()
+
 
 def _to_naive(dt):
     """Force any datetime to naive UTC for safe comparisons."""
     if dt is None:
         return None
     return dt.replace(tzinfo=None)
+
 
 def _issue_jwt(user: User):
     now = datetime.now(timezone.utc)
@@ -44,6 +57,7 @@ def _issue_jwt(user: User):
     }
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALG), exp
 
+
 def _unique_username_from_fullname(full_name: str) -> str:
     base = slugify_username(full_name)
     candidate, i = base, 1
@@ -51,6 +65,7 @@ def _unique_username_from_fullname(full_name: str) -> str:
         i += 1
         candidate = f"{base}-{i}"
     return candidate
+
 
 def _build_verify_link(request, token: str) -> str:
     """
@@ -60,13 +75,16 @@ def _build_verify_link(request, token: str) -> str:
     path = reverse("verify-email")
     return request.build_absolute_uri(f"{path}?token={token}")
 
+
 def _send_verification_email(request, user: User):
     """
     Generate single-use token with expiry and send a verification email.
     """
     token = secrets.token_urlsafe(32)
     user.email_verify_token = token
-    user.email_verify_expires = _utcnow_naive() + timedelta(minutes=EMAIL_VERIFY_TTL_MIN)
+    user.email_verify_expires = _utcnow_naive() + timedelta(
+        minutes=EMAIL_VERIFY_TTL_MIN
+    )
     user.save()
 
     verify_url = _build_verify_link(request, token)
@@ -88,6 +106,11 @@ def _send_verification_email(request, user: User):
         fail_silently=False,
     )
 
+
+# ======================
+#   AUTH VIEWS
+# ======================
+
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def signup(request):
@@ -102,16 +125,18 @@ def signup(request):
     if missing:
         return Response({"error": f"Missing: {', '.join(missing)}"}, status=400)
 
-    full_name    = r["full_name"].strip()
+    full_name = r["full_name"].strip()
     what_he_does = r["what_he_does"].strip()
-    region       = r["region"].strip()
-    email        = r["email"].strip().lower()
-    password     = r["password"]
+    region = r["region"].strip()
+    email = r["email"].strip().lower()
+    password = r["password"]
     # Accept any role; default USER if not provided
-    role         = (r.get("role") or "USER").strip()
+    role = (r.get("role") or "USER").strip()
 
     if len(password) < 6:
-        return Response({"error": "Password must be at least 6 characters."}, status=400)
+        return Response(
+            {"error": "Password must be at least 6 characters."}, status=400
+        )
     if User.objects(email=email).first():
         return Response({"error": "Email already registered."}, status=409)
 
@@ -132,17 +157,22 @@ def signup(request):
     # Send verification email
     try:
         _send_verification_email(request, user)
-    except Exception:
+    except Exception as e:
+        logger.error(f"Email verification send failed: {e}")
         return Response({"error": "Failed to send verification email."}, status=500)
 
-    return Response({
-        "id": str(user.id),
-        "username": user.username,
-        "email": user.email,
-        "role": user.role,
-        "message": "Account created. Please verify your email to sign in.",
-        "verification_email_sent": True
-    }, status=201)
+    return Response(
+        {
+            "id": str(user.id),
+            "username": user.username,
+            "email": user.email,
+            "role": user.role,
+            "message": "Account created. Please verify your email to sign in.",
+            "verification_email_sent": True,
+        },
+        status=201,
+    )
+
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
@@ -160,19 +190,25 @@ def signin(request):
 
     if not getattr(user, "is_email_verified", False):
         return Response(
-            {"error": "Email not verified. Please check your inbox.", "needs_verification": True},
-            status=403
+            {
+                "error": "Email not verified. Please check your inbox.",
+                "needs_verification": True,
+            },
+            status=403,
         )
 
     token, exp = _issue_jwt(user)
-    return Response({
-        "id": str(user.id),
-        "username": user.username,
-        "email": user.email,
-        "role": user.role,
-        "token": token,
-        "token_expires": exp.isoformat()
-    })
+    return Response(
+        {
+            "id": str(user.id),
+            "username": user.username,
+            "email": user.email,
+            "role": user.role,
+            "token": token,
+            "token_expires": exp.isoformat(),
+        }
+    )
+
 
 @api_view(["GET"])
 @permission_classes([AllowAny])
@@ -202,6 +238,7 @@ def verify_email(request):
 
     return Response({"message": "Email verified successfully. You may now sign in."})
 
+
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def resend_verification(request):
@@ -209,11 +246,17 @@ def resend_verification(request):
     POST { "username": "<username>" }  OR  { "email": "<email>" }
     Sends a new verification email if not yet verified.
     """
-    login = (request.data.get("username") or request.data.get("email") or "").strip().lower()
+    login = (
+        (request.data.get("username") or request.data.get("email") or "")
+        .strip()
+        .lower()
+    )
     if not login:
         return Response({"error": "Provide username or email."}, status=400)
 
-    user = User.objects(__raw__={"$or": [{"username": login}, {"email": login}]}).first()
+    user = User.objects(
+        __raw__={"$or": [{"username": login}, {"email": login}]}
+    ).first()
     if not user:
         return Response({"error": "User not found."}, status=404)
     if getattr(user, "is_email_verified", False):
@@ -223,11 +266,9 @@ def resend_verification(request):
     return Response({"message": "Verification email sent."})
 
 
-
-# monitoring/views.py (À LA FIN)
-
-import logging
-logger = logging.getLogger(__name__)
+# ======================
+#   CONTACT FORM VIEW
+# ======================
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
@@ -240,7 +281,7 @@ def contact(request):
     if missing:
         return Response(
             {"error": f"Champs manquants : {', '.join(missing)}"},
-            status=status.HTTP_400_BAD_REQUEST
+            status=status.HTTP_400_BAD_REQUEST,
         )
 
     name = data["name"].strip()
@@ -264,7 +305,7 @@ def contact(request):
             email=email,
             subject=subject,
             message=message,
-            is_read=False
+            is_read=False,
         )
         contact_msg.save()
         logger.info(f"Message sauvegardé | ID: {contact_msg.id}")
@@ -274,7 +315,9 @@ def contact(request):
 
     # --- EMAIL À AEROSENSE ---
     try:
-        logger.info(f"Envoi à contact@aerosense.com depuis {settings.DEFAULT_FROM_EMAIL}")
+        logger.info(
+            f"Envoi à contact@aerosense.com depuis {settings.DEFAULT_FROM_EMAIL}"
+        )
         send_mail(
             subject=f"[AeroSense] {subject}",
             message=f"""
@@ -288,7 +331,7 @@ def contact(request):
             {message}
             """,
             from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=['contact@aerosense.com'],
+            recipient_list=["mariemjabberi94@gmail.com"],
             fail_silently=False,
         )
         logger.info("Email AeroSense envoyé")
@@ -324,5 +367,189 @@ def contact(request):
     # SUCCÈS MÊME SI EMAIL ÉCHOUE
     return Response(
         {"detail": "Message envoyé avec succès !"},
-        status=status.HTTP_201_CREATED
+        status=status.HTTP_201_CREATED,
     )
+
+
+# ======================
+#   MONGO HELPERS (S5P / S3)
+# ======================
+
+def _get_mongo_collection(kind: str):
+    """
+    Returns (collection, client) for 's5p' or 's3_lst'.
+    Caller MUST close client in a finally block.
+    """
+    if MongoClient is None:
+        raise RuntimeError("pymongo is not installed.")
+
+    uri = os.getenv("MONGO_URI")
+    if not uri:
+        raise RuntimeError("MONGO_URI is not set in environment.")
+
+    db_name = os.getenv("MONGO_DB", "monitoring")
+    client = MongoClient(uri)
+    db = client[db_name]
+
+    if kind == "s5p":
+        col_name = os.getenv("MONGO_S5P_COL", "s5p_daily")
+    else:
+        col_name = os.getenv("MONGO_S3_COL", "s3_lst_daily")
+
+    return db[col_name], client
+
+
+def _serialize_mongo_doc(doc: dict) -> dict:
+    """
+    Convert MongoDB document to JSON-serializable dict.
+    """
+    if not doc:
+        return doc
+    doc = dict(doc)  # shallow copy
+    _id = doc.get("_id")
+    if _id is not None:
+        doc["_id"] = str(_id)
+    return doc
+
+
+# ======================
+#   LATEST S5P GASES
+# ======================
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def latest_s5p(request):
+    """
+    GET /api/s5p/latest/?region=ariana&gas=NO2,CO&top=3
+
+    - region: required (e.g., 'ariana', 'tunisia', ...)
+    - gas: optional, comma-separated (NO2,CO,CH4,O3,SO2); default = all gases in that region
+    - top: optional, number of latest records per gas (default=3)
+
+    Returns:
+    {
+      "region": "ariana",
+      "gases": ["NO2","CO"],
+      "top": 3,
+      "results": {
+        "NO2": [ ...docs... ],
+        "CO":  [ ...docs... ]
+      }
+    }
+    """
+    region = (request.query_params.get("region") or "").strip().lower()
+    gas_param = (request.query_params.get("gas") or "").strip().upper()
+    top_str = request.query_params.get("top", "3")
+
+    if not region:
+        return Response({"error": "region query parameter is required."}, status=400)
+
+    try:
+        top = int(top_str)
+    except ValueError:
+        return Response({"error": "top must be an integer."}, status=400)
+
+    # parse gases (optional)
+    gases = []
+    if gas_param:
+        gases = [g.strip().upper() for g in gas_param.split(",") if g.strip()]
+
+    try:
+        col, client = _get_mongo_collection("s5p")
+    except Exception as e:
+        logger.error(f"S5P Mongo connection error: {e}")
+        return Response({"error": f"Database connection error: {e}"}, status=500)
+
+    try:
+        # if no specific gases provided, auto-detect distinct gases in this region
+        if not gases:
+            gases = sorted(col.distinct("gas", {"region": region}))
+
+        results = {}
+        for g in gases:
+            cursor = (
+                col.find({"region": region, "gas": g})
+                .sort("date", -1)  # newest first (YYYY-MM-DD string sort works)
+                .limit(top)
+            )
+            docs = [_serialize_mongo_doc(d) for d in cursor]
+            results[g] = docs
+
+        return Response(
+            {
+                "region": region,
+                "gases": gases,
+                "top": top,
+                "results": results,
+            }
+        )
+    except Exception as e:
+        logger.error(f"S5P latest query error: {e}")
+        return Response({"error": f"Query error: {e}"}, status=500)
+    finally:
+        try:
+            client.close()
+        except Exception:
+            pass
+
+
+# ======================
+#   LATEST S3 LST
+# ======================
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def latest_s3_lst(request):
+    """
+    GET /api/s3/lst/latest/?region=ariana&top=3
+
+    - region: required (e.g., 'ariana', 'tunisia', ...)
+    - top: optional integer (default=3)
+
+    Returns:
+    {
+      "region": "ariana",
+      "top": 3,
+      "results": [ ...docs... ]    # product='LST'
+    }
+    """
+    region = (request.query_params.get("region") or "").strip().lower()
+    top_str = request.query_params.get("top", "3")
+
+    if not region:
+        return Response({"error": "region query parameter is required."}, status=400)
+
+    try:
+        top = int(top_str)
+    except ValueError:
+        return Response({"error": "top must be an integer."}, status=400)
+
+    try:
+        col, client = _get_mongo_collection("s3")
+    except Exception as e:
+        logger.error(f"S3 Mongo connection error: {e}")
+        return Response({"error": f"Database connection error: {e}"}, status=500)
+
+    try:
+        cursor = (
+            col.find({"region": region, "product": "LST"})
+            .sort("date", -1)
+            .limit(top)
+        )
+        docs = [_serialize_mongo_doc(d) for d in cursor]
+
+        return Response(
+            {
+                "region": region,
+                "top": top,
+                "results": docs,
+            }
+        )
+    except Exception as e:
+        logger.error(f"S3 LST latest query error: {e}")
+        return Response({"error": f"Query error: {e}"}, status=500)
+    finally:
+        try:
+            client.close()
+        except Exception:
+            pass
