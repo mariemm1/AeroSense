@@ -1,0 +1,151 @@
+/* ===== HERO HYBRIDE : CONTACT STYLE + SPATIAL ANIMATIONS ===== */
+.hero {
+  position: relative;
+  min-height: 80vh;
+  background: url('/assets/images/hero-monitoring.jpg') center/cover no-repeat;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  text-align: center;
+  color: white;
+  overflow: hidden;
+}
+
+/* Overlay sombre (comme Contact) */
+.hero::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1;
+}
+
+/* ÉTOILES ANIMÉES (comme avant) */
+.stars {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 0;
+}
+
+.stars::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-image: 
+    radial-gradient(2px 2px at 20px 30px, #eee, transparent),
+    radial-gradient(2px 2px at 40px 70px, rgba(255,255,255,0.8), transparent),
+    radial-gradient(1px 1px at 90px 40px, #fff, transparent),
+    radial-gradient(1px 1px at 130px 80px, #fff, transparent),
+    radial-gradient(2px 2px at 160px 30px, rgba(255,255,255,0.6), transparent);
+  background-repeat: repeat;
+  background-size: 200px 200px;
+  animation: twinkle 15s linear infinite;
+  opacity: 0.8;
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+/* POUSSIÈRE SAHARIENNE (comme avant) */
+.dust-plume {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: radial-gradient(ellipse at 30% 60%, rgba(255,165,0,0.18) 0%, transparent 50%),
+              radial-gradient(ellipse at 70% 40%, rgba(255,200,100,0.12) 0%, transparent 60%);
+  animation: dust 25s ease-in-out infinite;
+  z-index: 0;
+  opacity: 0.7;
+}
+
+@keyframes dust {
+  0%, 100% { transform: translateX(-50px) rotate(2deg); opacity: 0.6; }
+  50% { transform: translateX(50px) rotate(-2deg); opacity: 0.9; }
+}
+
+/* CONTENU */
+.hero-content {
+  position: relative;
+  z-index: 2;
+  max-width: 900px;
+  animation: fadeInUp 1.5s ease-out;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.hero h1 {
+  font-size: 4.2rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  text-shadow: 0 4px 20px rgba(0,0,0,0.6);
+  letter-spacing: 1.5px;
+  background: linear-gradient(90deg, #00a0df, #00c3ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.hero p {
+  font-size: 1.5rem;
+  margin-bottom: 2.5rem;
+  opacity: 0.95;
+  font-weight: 300;
+  color: #e0f7ff;
+}
+
+/* BOUTONS */
+.hero-buttons {
+  display: flex;
+  gap: 1.5rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.btn-primary, .btn-secondary {
+  padding: 16px 40px;
+  border-radius: 50px;
+  font-weight: 600;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: all 0.4s ease;
+  min-width: 210px;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary {
+  background: linear-gradient(45deg, #00a0df, #00c3ff);
+  color: white;
+  border: none;
+  box-shadow: 0 8px 25px rgba(0,160,223,0.4);
+}
+
+.btn-primary:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 35px rgba(0,160,223,0.6);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: white;
+  border: 2.5px solid rgba(255,255,255,0.8);
+  backdrop-filter: blur(5px);
+}
+
+.btn-secondary:hover {
+  background: rgba(255,255,255,0.15);
+  border-color: white;
+  transform: translateY(-5px);
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .hero h1 { font-size: 2.8rem; }
+  .hero p { font-size: 1.2rem; }
+  .hero-buttons { flex-direction: column; align-items: center; }
+  .btn-primary, .btn-secondary { min-width: 180px; }
+}

@@ -1,18 +1,10 @@
-// src/app/dashboard/dashboard.ts
-
-import {
-  ChangeDetectionStrategy,
-  Component,
-  OnInit
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { NgApexchartsModule, ApexOptions } from 'ng-apexcharts';
 import { forkJoin } from 'rxjs';
-
 import { SharedModule } from '../theme/shared/shared.module';
-import {
-  LatestS3LSTResponse,
+import { LatestS3LSTResponse,
   LatestS5PResponse
 } from '../models/atmospheric-gases.model';
 import { AtmosphericGasesService } from '../services/atmospheric-gases/atmospheric-gases';

@@ -1,29 +1,96 @@
-/* Load Leaflet’s styles via CSS, not TypeScript */
-@import 'leaflet/dist/leaflet.css';
+/* ===== AUTH LAYOUT : IMAGE PLEIN ÉCRAN ===== */
+.auth-fullscreen {
+  position: relative;
+  min-height: 100vh;
+  background: url('/assets/images/hero-monitoring.jpg') center/cover no-repeat;
+  background-attachment: fixed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  font-family: 'Inter', 'Roboto', sans-serif;
+  color: white;
+  overflow: hidden;
+}
 
-/* your existing styles… */
-:host,.scene{position:relative;display:grid;grid-template-columns:520px 1fr;height:100dvh;width:100%;overflow:hidden;background:#040c1a}
-.left{position:relative;z-index:2;display:flex;flex-direction:column;padding:36px 40px 24px;background:linear-gradient(180deg,rgba(4,12,26,.7),rgba(4,12,26,.55));border-right:1px solid rgba(255,255,255,.06)}
-.brand{display:flex;align-items:center;gap:12px;margin-bottom:24px}
-.logo{width:40px;height:40px;display:grid;place-items:center;border-radius:12px;background:radial-gradient(120% 100% at 50% 0%,#38bdf8 0,#1d4ed8 80%);color:#fff;font-size:20px}
-.name{color:#e2ecff;font-weight:800;letter-spacing:.6px;font-size:18px}
-.foot{margin-top:auto;color:#86a1c2;font-size:12px;opacity:.8}
-.right{position:relative;z-index:1}
-.copy{position:absolute;left:56px;top:56px;color:#e8f3ff;max-width:520px}
-.copy h1{font-size:56px;line-height:1.05;margin:0 0 10px;font-weight:900}
-.copy p{opacity:.8;font-size:18px}
-.aurora,.stars{position:absolute;inset:0}
-.aurora{background:
-  radial-gradient(1200px 600px at 30% 20%,rgba(56,189,248,.35),transparent 60%),
-  radial-gradient(800px 500px at 80% 10%,rgba(59,130,246,.35),transparent 60%),
-  radial-gradient(1000px 600px at 60% 90%,rgba(16,185,129,.25),transparent 60%);
-  filter:blur(40px);animation:drift 16s ease-in-out infinite alternate}
-@keyframes drift{from{transform:translateY(-10px)}to{transform:translateY(10px)}}
-.stars:before{content:"";position:absolute;inset:0;background-image:radial-gradient(#9cc3ff 1px,transparent 1px);
-  background-size:2px 2px;opacity:.35;mask-image:radial-gradient(1200px 800px at 50% 40%,#000 50%,transparent 90%)}
+/* Overlay sombre pour lisibilité */
+.auth-overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(135deg, 
+    rgba(10, 14, 23, 0.85) 0%, 
+    rgba(26, 31, 46, 0.7) 50%, 
+    rgba(42, 47, 78, 0.85) 100%
+  );
+  z-index: 1;
+}
 
-/* the actual map host */
-.canvas{position:absolute;inset:0}
+/* Contenu centré */
+.auth-content {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 420px;
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-radius: 24px;
+  padding: 3rem 2.5rem;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  text-align: center;
+}
 
-/* optional: keep Leaflet’s default bg transparent to blend with theme */
-.leaflet-container{background:transparent !important}
+/* ===== HEADER ===== */
+.auth-header {
+  margin-bottom: 2.5rem;
+}
+
+.auth-header h1 {
+  font-size: 3rem;
+  font-weight: 800;
+  background: linear-gradient(90deg, #00a0df, #00c3ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin: 0 0 0.5rem;
+}
+
+.auth-header p {
+  font-size: 1.2rem;
+  opacity: 0.95;
+  margin: 0;
+  font-weight: 300;
+}
+
+/* ===== FOOTER ===== */
+.auth-footer {
+  margin-top: 2.5rem;
+  font-size: 0.85rem;
+  opacity: 0.8;
+  line-height: 1.6;
+}
+
+.auth-footer p {
+  margin: 0.5rem 0;
+}
+
+.auth-footer strong {
+  color: #00c3ff;
+  font-weight: 600;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 576px) {
+  .auth-content {
+    padding: 2rem 1.5rem;
+    border-radius: 18px;
+  }
+
+  .auth-header h1 {
+    font-size: 2.4rem;
+  }
+
+  .auth-header p {
+    font-size: 1rem;
+  }
+}
