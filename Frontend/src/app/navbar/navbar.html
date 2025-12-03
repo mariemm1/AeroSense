@@ -1,0 +1,35 @@
+<nav class="navbar" [class.scrolled]="true">
+  <div class="nav-container">
+    <!-- LOGO -->
+    <a routerLink="/" class="logo" routerLinkActive="active">
+      <div class="logo-icon">
+        <svg width="32" height="32" viewBox="0 0 100 100" fill="none">
+          <circle cx="50" cy="50" r="45" stroke="currentColor" stroke-width="8"/>
+          <path d="M30 50 Q50 30, 70 50 Q50 70, 30 50" stroke="currentColor" stroke-width="6" fill="none"/>
+        </svg>
+      </div>
+      <span class="logo-text">AeroSense</span>
+    </a>
+
+    <!-- MENU DESKTOP -->
+    <ul class="nav-menu" [class.active]="isMenuOpen">
+      <li><a routerLink="/" routerLinkActive="active">Accueil</a></li>
+      <li><a routerLink="/education" routerLinkActive="active">Éducation</a></li>
+      <li><a routerLink="/alerts" routerLinkActive="active">Alertes</a></li>
+      <li><a routerLink="/contact" routerLinkActive="active">Contact Us</a></li>
+      <li *ngIf="!isLoggedIn"><a routerLink="/signin">Connexion</a></li>
+
+      <li *ngIf="isLoggedIn"><a (click)="logout()" class="logout">Déconnexion</a></li>
+    </ul>
+
+    <!-- HAMBURGER -->
+    <div class="hamburger" (click)="toggleMenu()" [class.active]="isMenuOpen">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+  </div>
+</nav>
+
+<!-- ESPACE POUR CONTENU -->
+<div class="navbar-spacer"></div>

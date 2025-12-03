@@ -1,25 +1,21 @@
-<div class="scene">
-  <div class="aurora"></div>
-  <div class="stars"></div>
+<!-- AUTH LAYOUT : IMAGE PLEIN ÉCRAN -->
+<div class="auth-fullscreen">
+  <div class="auth-overlay"></div>
 
-  <div class="left">
-    <div class="brand">
-      <div class="logo">🜁</div>
-      <div class="name">AeroSense</div>
+  <div class="auth-content">
+    <!-- Logo + Titre -->
+    <div class="auth-header">
+      <h1>AeroSense</h1>
+      <p>Monitoring intelligent de la qualité de l’air</p>
     </div>
 
+    <!-- Contenu injecté (login, signup, etc.) -->
     <ng-content></ng-content>
 
-    <div class="foot">© {{ y }} AeroSense — Atmospheric Intelligence</div>
-  </div>
-
-  <div class="right">
-    <div class="copy">
-      <h1>Read the Sky</h1>
-      <p>Clean air insights for researchers, students and cities.</p>
-    </div>
-
-    <!-- ✅ map anchor -->
-    <div #canvasRef class="canvas"></div>
+    <!-- Footer -->
+    <footer class="auth-footer">
+      <p>© {{ y }} AeroSense. Tous droits réservés.</p>
+     
+    </footer>
   </div>
 </div>
