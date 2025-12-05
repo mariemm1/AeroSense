@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-navbar',
@@ -9,8 +9,9 @@ import { Router, RouterLink } from '@angular/router';
   styleUrl: './navbar.css',
 })
 export class Navbar {
-    isLoggedIn = false;
-isMenuOpen = false;
+  isLoggedIn = false;
+  isMenuOpen = false;
+
   toggleMenu() {
     this.isMenuOpen = !this.isMenuOpen;
   }
@@ -19,7 +20,4 @@ isMenuOpen = false;
     this.isLoggedIn = false;
     this.isMenuOpen = false;
   }
-
- 
-
 }
