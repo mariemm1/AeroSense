@@ -1,20 +1,17 @@
-
-
 <div class="contact-page">
   <!-- Hero Section -->
   <section class="hero">
+    <div class="stars"></div>
+    <div class="dust-plume"></div>
+
     <div class="hero-content">
       <h1>Contactez l'équipe AeroSense</h1>
-      <p>Vous avez une question sur nos capteurs PM2.5, NO2, SO2, CO2 ? Besoin d'une démo de notre plateforme de monitoring en temps réel ? <strong>Nous répondons sous 24h.</strong></p>
-      <div class="video-teaser">
-        <button class="play-button" aria-label="Regarder la vidéo">
-          <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="40" cy="40" r="39" stroke="#28a745" stroke-width="2" fill="transparent"/>
-            <path d="M32 28L52 40L32 52V28Z" fill="#28a745"/>
-          </svg>
-        </button>
-        <p><strong>Evgeny Lupanov</strong>, CTO, présente notre technologie de capteurs laser.</p>
-      </div>
+      <p>
+        Vous avez une question sur nos capteurs PM2.5, NO₂, SO₂, CO₂ ? Besoin d'une démo
+        de notre plateforme de monitoring en temps réel ?
+        <strong>Nous répondons sous 24h.</strong>
+      </p>
+      <!-- video teaser removed -->
     </div>
   </section>
 
@@ -23,46 +20,82 @@
     <div class="form-bg"></div>
     <h2>Envoyez-nous un message</h2>
     <p class="form-subtitle">Tous les champs sont obligatoires</p>
-    <form [formGroup]="contactForm" (ngSubmit)="onSubmit()" class="contact-form">
+    <form
+      [formGroup]="contactForm"
+      (ngSubmit)="onSubmit()"
+      class="contact-form"
+    >
       <div class="form-group">
-        <input type="text" formControlName="name" id="name" placeholder="Votre Nom Complet" [class.is-invalid]="submitted && f['name']?.errors" required />
+        <input
+          type="text"
+          formControlName="name"
+          id="name"
+          placeholder="Votre Nom Complet"
+          [class.is-invalid]="submitted && f['name']?.errors"
+          required
+        />
         <div class="invalid-feedback" *ngIf="submitted && f['name']?.errors">
           <div *ngIf="f['name']?.errors?.['required']">Le nom est requis.</div>
           <div *ngIf="f['name']?.errors?.['minlength']">Minimum 2 caractères.</div>
         </div>
       </div>
       <div class="form-group">
-        <input type="email" formControlName="email" id="email" placeholder="email@entreprise.com" [class.is-invalid]="submitted && f['email']?.errors" required />
+        <input
+          type="email"
+          formControlName="email"
+          id="email"
+          placeholder="email@entreprise.com"
+          [class.is-invalid]="submitted && f['email']?.errors"
+          required
+        />
         <div class="invalid-feedback" *ngIf="submitted && f['email']?.errors">
           <div *ngIf="f['email']?.errors?.['required']">L'email est requis.</div>
           <div *ngIf="f['email']?.errors?.['email']">Email invalide.</div>
         </div>
       </div>
       <div class="form-group">
-        <input type="text" formControlName="subject" id="subject" placeholder="Ex: Devis pour 10 capteurs PM2.5" [class.is-invalid]="submitted && f['subject']?.errors" required />
+        <input
+          type="text"
+          formControlName="subject"
+          id="subject"
+          placeholder="Ex: Devis pour 10 capteurs PM2.5"
+          [class.is-invalid]="submitted && f['subject']?.errors"
+          required
+        />
         <div class="invalid-feedback" *ngIf="submitted && f['subject']?.errors">
           <div *ngIf="f['subject']?.errors?.['required']">Le sujet est requis.</div>
           <div *ngIf="f['subject']?.errors?.['minlength']">Minimum 5 caractères.</div>
         </div>
       </div>
       <div class="form-group">
-        <textarea formControlName="message" id="message" rows="6" placeholder="Décrivez votre besoin : type de gaz, zone de déploiement, volume..." [class.is-invalid]="submitted && f['message']?.errors" required></textarea>
+        <textarea
+          formControlName="message"
+          id="message"
+          rows="6"
+          placeholder="Décrivez votre besoin : type de gaz, zone de déploiement, volume..."
+          [class.is-invalid]="submitted && f['message']?.errors"
+          required
+        ></textarea>
         <div class="invalid-feedback" *ngIf="submitted && f['message']?.errors">
           <div *ngIf="f['message']?.errors?.['required']">Le message est requis.</div>
           <div *ngIf="f['message']?.errors?.['minlength']">Minimum 10 caractères.</div>
         </div>
       </div>
-      <button type="submit" class="submit-btn" [disabled]="loading || contactForm.invalid">
+      <button
+        type="submit"
+        class="submit-btn"
+        [disabled]="loading || contactForm.invalid"
+      >
         <span *ngIf="loading" class="spinner"></span>
         <span *ngIf="!loading">Envoyer la Demande</span>
         <span *ngIf="loading">Envoi en cours...</span>
       </button>
     </form>
     <div *ngIf="showSuccess" class="alert success-message">
-      <strong>Message envoyé !</strong><br>Nous vous répondons sous 24h.
+      <strong>Message envoyé !</strong><br />Nous vous répondons sous 24h.
     </div>
     <div *ngIf="showError" class="alert error-message">
-      <strong>Erreur</strong><br>Veuillez réessayer.
+      <strong>Erreur</strong><br />Veuillez réessayer.
     </div>
   </section>
 
@@ -71,39 +104,89 @@
     <h2>Notre Équipe Exécutive</h2>
     <p class="scroll-hint">Faites défiler pour découvrir</p>
     <div class="team-grid">
-  <div class="team-member">
-  <img src="assets/images/mariem.jpg" alt="Mariem Jabberi" class="team-photo" />
-  <h3 class="team-name">Mariem Jabberi</h3>
-  <p class="team-role"> Chef de Projet </p>
-  <a href=" https://www.linkedin.com/in/mariem-jabberi/
-" class="linkedin-icon" target="_blank" aria-label="Profil LinkedIn de Mariem Jabberi">
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#0077b5">
-      <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
-    </svg>
-  </a>
-</div>
-      
       <div class="team-member">
-  <img src="assets/images/manel.jpg" alt="Manel Sassi" class="team-photo" />
-  <h3 class="team-name">Manel Sassi</h3>
-  <p class="team-role">Directrice Production - Qualité de l’Air</p>
-  <a href="https://www.linkedin.com/in/manel-sassi-a86331177/
-" class="linkedin-icon" target="_blank" aria-label="Profil LinkedIn de Manel Sassi">
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#0077b5">
-      <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
-    </svg>
-  </a>
-</div>
-       <div class="team-member">
-  <img src="assets/images/nada.jpg" alt="Nada Gharbi" class="team-photo" />
-  <h3 class="team-name">Nada Gharbi</h3>
-  <p class="team-role">Directrice Générale</p>
-  <a href="https://www.linkedin.com/in/nada-gharbi-924265253/" class="linkedin-icon" target="_blank" aria-label="Profil LinkedIn de Nada Gharbi">
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#0077b5">
-      <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
-    </svg>
-  </a>
-</div>
+        <img
+          src="assets/images/mariem.jpg"
+          alt="Mariem Jabberi"
+          class="team-photo"
+        />
+        <h3 class="team-name">Mariem Jabberi</h3>
+        <p class="team-role"> Chef de Projet </p>
+        <a
+          href="https://www.linkedin.com/in/mariem-jabberi/"
+          class="linkedin-icon"
+          target="_blank"
+          aria-label="Profil LinkedIn de Mariem Jabberi"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="#0077b5"
+          >
+            <path
+              d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"
+            />
+          </svg>
+        </a>
+      </div>
+
+      <div class="team-member">
+        <img
+          src="assets/images/manel.jpg"
+          alt="Manel Sassi"
+          class="team-photo"
+        />
+        <h3 class="team-name">Manel Sassi</h3>
+        <p class="team-role">Directrice Production - Qualité de l’Air</p>
+        <a
+          href="https://www.linkedin.com/in/manel-sassi-a86331177/"
+          class="linkedin-icon"
+          target="_blank"
+          aria-label="Profil LinkedIn de Manel Sassi"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="#0077b5"
+          >
+            <path
+              d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"
+            />
+          </svg>
+        </a>
+      </div>
+
+      <div class="team-member">
+        <img
+          src="assets/images/nada.jpg"
+          alt="Nada Gharbi"
+          class="team-photo"
+        />
+        <h3 class="team-name">Nada Gharbi</h3>
+        <p class="team-role">Directrice Générale</p>
+        <a
+          href="https://www.linkedin.com/in/nada-gharbi-924265253/"
+          class="linkedin-icon"
+          target="_blank"
+          aria-label="Profil LinkedIn de Nada Gharbi"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="#0077b5"
+          >
+            <path
+              d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"
+            />
+          </svg>
+        </a>
+      </div>
     </div>
   </section>
 
@@ -111,22 +194,40 @@
   <section class="offices-section">
     <h2>Nos Bureaux</h2>
     <div class="offices-grid">
-      <div class="office-card" [style.background-image]="'url(assets/images/office-austin.jpg)'">
+      <div
+        class="office-card"
+        [style.background-image]="'url(assets/images/office-austin.jpg)'"
+      >
         <h3 class="office-location">🇹🇳 Tunisie – Tunis (Siège principal)</h3>
-        <p class="office-address">📍 Cyber Parc El Ghazala – Ariana<br>Centre d’Innovation Technologique, Bloc B2
-Tunis, 2083</p>
+        <p class="office-address">
+          📍 Cyber Parc El Ghazala – Ariana<br />
+          Centre d’Innovation Technologique, Bloc B2<br />
+          Tunis, 2083
+        </p>
       </div>
       <div class="office-card">
         <h3 class="office-location">🇩🇪 Allemagne – Schmalkalden</h3>
-        <p class="office-address">📍 Hochschule Schmalkalden, Blechhammerweg 9<br>98574 Schmalkalden, Allemagne</p>
+        <p class="office-address">
+          📍 Hochschule Schmalkalden, Blechhammerweg 9<br />
+          98574 Schmalkalden, Allemagne
+        </p>
       </div>
       <div class="office-card">
         <h3 class="office-location">🇫🇷 France – Paris</h3>
-        <p class="office-address">📍 16 Rue du Faubourg Saint-Denis<br>75010 Paris, France</p>
+        <p class="office-address">
+          📍 16 Rue du Faubourg Saint-Denis<br />
+          75010 Paris, France
+        </p>
       </div>
-      <div class="office-card" [style.background-image]="'url(assets/images/office-austin.jpg)'">
+      <div
+        class="office-card"
+        [style.background-image]="'url(assets/images/office-austin.jpg)'"
+      >
         <h3 class="office-location">🇺🇸 États-Unis – Austin</h3>
-        <p class="office-address">📍 5900 Balcones Drive #21729<br>Austin, TX 78731, USA</p>
+        <p class="office-address">
+          📍 5900 Balcones Drive #21729<br />
+          Austin, TX 78731, USA
+        </p>
       </div>
     </div>
   </section>

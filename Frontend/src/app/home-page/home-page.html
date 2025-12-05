@@ -9,67 +9,15 @@
     <h1>Monitoring Intelligent des Gaz Atmosphériques</h1>
     <p>Sentinel-5P • Deep Learning • Alertes AQI en temps réel</p>
     <div class="hero-buttons">
-      <button class="btn-primary" routerLink="/dashboard">
+      <!-- ✅ Go to LOGIN instead of dashboard directly -->
+      <button class="btn-primary" routerLink="/signin">
         Accéder au Dashboard
       </button>
-      <button class="btn-secondary" routerLink="/education">
+
+      <!-- ✅ NOW: go to About page -->
+      <button class="btn-secondary" routerLink="/about">
         Découvrir
       </button>
-    </div>
-  </div>
-</section>
-
-<!-- LIVE DATA -->
-<section class="live-preview">
-  <h2>Qualité de l'air en temps réel</h2>
-  <div class="map-placeholder">
-    <div class="map-overlay">
-      <span class="material-icons">public</span>
-      <p>Carte interactive Sentinel-5P en cours de chargement...</p>
-    </div>
-  </div>
-  <div class="stats-grid">
-    <div class="stat-card" *ngFor="let stat of liveStats">
-      <div class="stat-header">
-        <h3>{{ stat.gas }}</h3>
-        <span class="aqi-badge" [style.background-color]="stat.color">{{ stat.level }}</span>
-      </div>
-      <p class="value">{{ stat.value }}</p>
-      <p class="unit">{{ stat.unit }}</p>
-    </div>
-  </div>
-</section>
-
-<!-- FEATURES -->
-<section class="features">
-  <div class="feature" *ngFor="let f of features">
-    <span class="material-icons icon">{{ f.icon }}</span>
-    <h3>{{ f.title }}</h3>
-    <p>{{ f.desc }}</p>
-  </div>
-</section>
-
-<!-- EDUCATION TEASER -->
-<section class="education-teaser">
-  <h2>Comprendre les gaz atmosphériques</h2>
-  <div class="edu-cards">
-    <div class="edu-card">
-      <div class="molecule co"></div>
-      <h4>CO - Monoxyde de carbone</h4>
-      <p>Gaz toxique issu de la combustion incomplète.</p>
-      <a routerLink="/education">En savoir plus</a>
-    </div>
-    <div class="edu-card">
-      <div class="molecule no2"></div>
-      <h4>NO₂ - Dioxyde d’azote</h4>
-      <p>Principal polluant des villes.</p>
-      <a routerLink="/education">En savoir plus</a>
-    </div>
-    <div class="edu-card">
-      <div class="molecule o3"></div>
-      <h4>O₃ - Ozone</h4>
-      <p>Bon en haute altitude, dangereux au sol.</p>
-      <a routerLink="/education">En savoir plus</a>
     </div>
   </div>
 </section>

@@ -30,7 +30,9 @@ export class ContactComponent {
     });
   }
 
-  get f() { return this.contactForm.controls; }
+  get f() {
+    return this.contactForm.controls;
+  }
 
   onSubmit() {
     this.submitted = true;
@@ -49,13 +51,13 @@ export class ContactComponent {
         this.showSuccess = true;
         this.contactForm.reset();
         this.submitted = false;
-        setTimeout(() => this.showSuccess = false, 5000);
+        setTimeout(() => (this.showSuccess = false), 5000);
       },
       error: (err) => {
         console.error('Erreur API:', err);
         this.loading = false;
         this.showError = true;
-        setTimeout(() => this.showError = false, 5000);
+        setTimeout(() => (this.showError = false), 5000);
       }
     });
   }

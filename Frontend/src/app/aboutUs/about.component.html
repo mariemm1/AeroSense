@@ -1,0 +1,96 @@
+<div class="about-page">
+  <!-- HERO -->
+  <section class="hero">
+    <div class="stars"></div>
+    <div class="dust-plume"></div>
+
+    <div class="hero-content">
+      <h1>À propos d’AeroSense</h1>
+      <p>
+        AeroSense combine <strong>satellites Sentinel-5P</strong>, 
+        <strong>IA</strong> et <strong>visualisation temps réel</strong> 
+        pour transformer les données atmosphériques en décisions
+        concrètes pour les villes, les chercheurs et le monde agricole.
+      </p>
+      <!-- 🔻 Buttons removed here -->
+    </div>
+  </section>
+
+  <!-- MISSION -->
+  <section class="mission">
+    <div class="mission-inner">
+      <h2>Notre mission</h2>
+      <p>
+        Offrir une vision claire, fiable et pédagogique de la qualité de l’air en Tunisie 
+        et au-delà, en s’appuyant sur les données d’observation de la Terre et les 
+        dernières avancées en Deep Learning. Nous voulons rendre les
+        <strong>gaz invisibles</strong> et la <strong>température de surface</strong> 
+        lisibles par tous, du décideur public à l’agriculteur sur le terrain.
+      </p>
+    </div>
+  </section>
+
+  <!-- GASES & LST -->
+  <section class="gases">
+    <h2>Les gaz que nous surveillons</h2>
+    <p class="section-subtitle">
+      Les capteurs Sentinel-5P mesurent plusieurs polluants atmosphériques clés.
+      AeroSense les fusionne avec la température de surface (LST) pour mieux
+      comprendre l’état de l’atmosphère et des sols.
+    </p>
+
+    <div class="gas-grid">
+      <article class="gas-card" *ngFor="let g of gases">
+        <div class="gas-header">
+          <span class="gas-code">{{ g.code }}</span>
+          <span class="gas-badge">{{ g.badge }}</span>
+        </div>
+        <h3 class="gas-name">{{ g.name }}</h3>
+        <p class="gas-role">{{ g.role }}</p>
+        <p class="gas-text">
+          {{ g.text }}
+        </p>
+      </article>
+    </div>
+  </section>
+
+  <!-- MODELS -->
+  <section class="models">
+    <h2>Nos modèles de Deep Learning</h2>
+    <p class="section-subtitle">
+      Chaque modèle est entraîné sur plusieurs années de données afin de
+      transformer des observations brutes en <strong>indicateurs opérationnels</strong>.
+    </p>
+
+    <div class="model-grid">
+      <article class="model-card" *ngFor="let m of models">
+        <h3>{{ m.title }}</h3>
+        <p>{{ m.text }}</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- WORKFLOW -->
+  <section class="workflow">
+    <h2>Comment fonctionne la plateforme&nbsp;?</h2>
+
+    <div class="workflow-grid">
+      <div class="workflow-step" *ngFor="let w of workflowSteps">
+        <div class="step-number">{{ w.step }}</div>
+        <h3>{{ w.title }}</h3>
+        <p>{{ w.text }}</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- AUDIENCE / WHO IT'S FOR -->
+  <section class="audience">
+    <h2>Pour qui construisons-nous AeroSense&nbsp;?</h2>
+    <div class="audience-grid">
+      <article class="audience-card" *ngFor="let a of audiences">
+        <h3>{{ a.title }}</h3>
+        <p>{{ a.text }}</p>
+      </article>
+    </div>
+  </section>
+</div>
