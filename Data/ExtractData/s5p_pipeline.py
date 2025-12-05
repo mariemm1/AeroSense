@@ -9,23 +9,12 @@ Processes:
   - selected gases
   - writes GeoTIFFs + CSV
   - upserts daily stats into MongoDB (same DB as Django backend)
-
-Usage example (single region "tunisia"):
-
-  python .\\Data\\ExtractData\\s5p_pipeline.py ^
-    --user %CDSE_USER% ^
-    --password %CDSE_PASSWORD% ^
-    --regions tunisia ^
-    --top 1 ^
-    --mongo-uri %MONGO_URI% ^
-    --mongo-db %MONGO_DB% ^
-    --mongo-s5p-col s5p_daily
 """
 
 from __future__ import annotations
 
 import argparse
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 import os
 
@@ -88,8 +77,13 @@ def process_s5p_gas(
     print(f"\n=== Region: {region_name} | S5P {gas_key} ===")
     footprint = wkt_polygon_from_bbox(bbox)
     product_ids = odata_search(
-        token, "SENTINEL-5P", product_token,
-        footprint, start_date, end_date, top=top
+        token,
+        "SENTINEL-5P",
+        product_token,
+        footprint,
+        start_date,
+        end_date,
+        top=top,
     )
     if not product_ids:
         print("  ! No products found.")
@@ -107,10 +101,13 @@ def process_s5p_gas(
 
     for pid in product_ids:
         nc_path = nc_dir / f"S5P_{gas_key}_{region_name}_{pid}.nc"
-        download_product(token, pid, nc_path)
+        result_path = download_product(token, pid, nc_path)
+        if result_path is None:
+            # download failed, skip this product
+            continue
 
         try:
-            ds, lat, lon = open_s5p_groups(nc_path)
+            ds, lat, lon = open_s5p_groups(result_path)
             var = pick_first_var(ds, var_candidates)
             var = apply_s5p_quality(var, ds, qa_thresh)
         except Exception as e:
@@ -126,7 +123,7 @@ def process_s5p_gas(
             continue
 
         grid, transform = grid_swath(var, lat, lon, bbox, GRID_RES)
-        date_str = infer_scene_date(ds, nc_path.name)
+        date_str = infer_scene_date(ds, result_path.name)
         ds.close()
 
         tif_path = tif_dir / f"{gas_key}_{region_name}_{date_str}.tif"
@@ -146,28 +143,30 @@ def process_s5p_gas(
             f"mean={stats['mean']:.6g} (saved {tif_path.name})"
         )
 
-        mongo_docs.append({
-            "source": "S5P",
-            "region": region_name,
-            "gas": gas_key,
-            "date": date_str,
-            "grid_res_deg": GRID_RES,
-            "aoi_key": _aoi_key,
-            "aoi": _aoi_geojson,
-            "stats": stats,
-            "files": {
-                "tif": str(tif_path),
-                "raw_nc": str(nc_path),
-            },
-            "params": {
-                "qa_threshold": qa_thresh,
-                "product_token": product_token,
-                "bbox": bbox,
-                "start": start_date,
-                "end": end_date,
-            },
-            "created_at": datetime.now(timezone.utc).isoformat(),
-        })
+        mongo_docs.append(
+            {
+                "source": "S5P",
+                "region": region_name,
+                "gas": gas_key,
+                "date": date_str,
+                "grid_res_deg": GRID_RES,
+                "aoi_key": _aoi_key,
+                "aoi": _aoi_geojson,
+                "stats": stats,
+                "files": {
+                    "tif": str(tif_path),
+                    "raw_nc": str(result_path),
+                },
+                "params": {
+                    "qa_threshold": qa_thresh,
+                    "product_token": product_token,
+                    "bbox": bbox,
+                    "start": start_date,
+                    "end": end_date,
+                },
+                "created_at": datetime.now(timezone.utc).isoformat(),
+            }
+        )
 
     if outputs:
         ensure_dir(CSV_DIR)
@@ -176,9 +175,10 @@ def process_s5p_gas(
         if csv_path.exists():
             old = pd.read_csv(csv_path)
             df = pd.concat([old, df], ignore_index=True)
-        df = df.drop_duplicates(
-            subset=["region", "gas", "date"], keep="last"
-        ).sort_values(["region", "gas", "date"])
+        df = (
+            df.drop_duplicates(subset=["region", "gas", "date"], keep="last")
+            .sort_values(["region", "gas", "date"])
+        )
         df.to_csv(csv_path, index=False)
         print(f"  → stats CSV updated: {csv_path}")
     else:
@@ -191,10 +191,21 @@ def process_s5p_gas(
     return outputs
 
 
+def parse_date_only(s: str):
+    """
+    Helper: get a date (YYYY-MM-DD) from different ISO-like strings.
+    Accepts 'YYYY-MM-DD' or full 'YYYY-MM-DDTHH:MM:SSZ'.
+    """
+    ds = s[:10]
+    return datetime.strptime(ds, "%Y-%m-%d").date()
+
+
 def main():
     parser = argparse.ArgumentParser(
-        description="Sentinel-5P gases daily downloader/processor "
-                    "(CDSE + optional MongoDB, per Tunisian region)."
+        description=(
+            "Sentinel-5P gases daily downloader/processor "
+            "(CDSE + optional MongoDB, per Tunisian region)."
+        )
     )
     parser.add_argument(
         "--user",
@@ -218,20 +229,33 @@ def main():
         help="Name used for Mongo/CSV when using manual bbox.",
     )
 
-    # list of predefined regions, e.g. "tunisia,ariana,tozeur"
+    # list of predefined regions, e.g. "tunisia,ariana,tozeur" or "all"
     parser.add_argument(
         "--regions",
         default="tunisia",
-        help="Comma list of predefined regions (keys of REGION_BBOXES). "
-             "If non-empty, overrides manual bbox.",
+        help=(
+            "Comma list of predefined regions (keys of REGION_BBOXES) "
+            "or 'all' for every predefined region. "
+            "If non-empty, overrides manual bbox."
+        ),
     )
 
-    parser.add_argument("--start", default=None,
-                        help="ISO start (default=yesterday 00:00Z)")
-    parser.add_argument("--end", default=None,
-                        help="ISO end (default=yesterday 23:59Z)")
-    parser.add_argument("--top", type=int, default=1,
-                        help="Latest N scenes per product")
+    parser.add_argument(
+        "--start",
+        default=None,
+        help="ISO start (default=yesterday 00:00Z)",
+    )
+    parser.add_argument(
+        "--end",
+        default=None,
+        help="ISO end (default=yesterday 23:59Z)",
+    )
+    parser.add_argument(
+        "--top",
+        type=int,
+        default=1,
+        help="Latest N scenes per query/filter",
+    )
     parser.add_argument(
         "--gases",
         default="NO2,CO,CH4,O3,SO2",
@@ -242,6 +266,17 @@ def main():
         type=float,
         default=QA_THRESH,
         help="QA threshold for S5P (default 0.75)",
+    )
+
+    # DAILY mode
+    parser.add_argument(
+        "--daily",
+        action="store_true",
+        help=(
+            "If set, loop day-by-day between start and end, "
+            "using a 00:00Z–23:59Z window for each day. "
+            "Typically use --top 1 in this mode."
+        ),
     )
 
     # Mongo options
@@ -263,14 +298,18 @@ def main():
 
     args = parser.parse_args()
 
-    # time window
+    # time window (base strings)
     if args.start and args.end:
-        start_date, end_date, run_day = args.start, args.end, args.start[:10]
+        start_iso, end_iso, run_day = args.start, args.end, args.start[:10]
     else:
-        start_date, end_date, run_day = yesterday_utc_range()
+        start_iso, end_iso, run_day = yesterday_utc_range()
 
-    print(f"Time: {start_date} → {end_date} (day {run_day})")
+    print(f"Time: {start_iso} → {end_iso} (day {run_day})")
     print(f"TOP per product: {args.top}")
+    if args.daily:
+        print("Mode: DAILY (loop per day)")
+    else:
+        print("Mode: RANGE (single query per gas/region)")
 
     ensure_dir(ROOT_DIR)
     ensure_dir(TIF_DIR)
@@ -300,20 +339,128 @@ def main():
     region_keys = [
         r.strip().lower() for r in args.regions.split(",") if r.strip()
     ]
+
+    # Special keyword: 'all' → all predefined regions in REGION_BBOXES
+    if "all" in region_keys:
+        region_keys = list(REGION_BBOXES.keys())
+
     if not region_keys:
         # fallback to manual bbox
         region_keys = []
 
     gases = [g.strip().upper() for g in args.gases.split(",") if g.strip()]
 
-    if region_keys:
-        # use predefined Tunisian regions
-        for reg in region_keys:
-            bbox = REGION_BBOXES.get(reg)
-            if bbox is None:
-                print(f"  ! Unknown region '{reg}' (skip).")
-                continue
-            print(f"\n=== Processing region '{reg}' with bbox {bbox} ===")
+    # DAILY MODE: loop over days
+    if args.daily and args.start and args.end:
+        start_date = parse_date_only(start_iso)
+        end_date = parse_date_only(end_iso)
+
+        if start_date > end_date:
+            raise ValueError("start date must be <= end date in daily mode.")
+
+        current = start_date
+        while current <= end_date:
+            day_start = f"{current.isoformat()}T00:00:00Z"
+            day_end = f"{current.isoformat()}T23:59:59Z"
+            print(
+                f"\n--- DAILY window {day_start} → {day_end} "
+                f"({current.isoformat()}) ---"
+            )
+
+            if region_keys:
+                # predefined regions
+                for reg in region_keys:
+                    bbox = REGION_BBOXES.get(reg)
+                    if bbox is None:
+                        print(f"  ! Unknown region '{reg}' (skip).")
+                        continue
+                    print(f"\n=== Processing region '{reg}' with bbox {bbox} ===")
+                    for g in gases:
+                        if g not in S5P_PRODUCTS:
+                            print(f"  ! Unknown gas '{g}' (skip).")
+                            continue
+                        p_token, _subdir, var_candidates = S5P_PRODUCTS[g]
+                        process_s5p_gas(
+                            token,
+                            g,
+                            p_token,
+                            var_candidates,
+                            bbox,
+                            region_name=reg,
+                            start_date=day_start,
+                            end_date=day_end,
+                            top=args.top,
+                            out_root=ROOT_DIR,
+                            qa_thresh=args.qa,
+                            mongo_s5p_coll=s5p_coll,
+                        )
+            else:
+                # manual bbox
+                bbox = (args.minx, args.miny, args.maxx, args.maxy)
+                region_name = args.region_name
+                print(
+                    f"\n=== Processing manual region '{region_name}' "
+                    f"with bbox {bbox} ==="
+                )
+                for g in gases:
+                    if g not in S5P_PRODUCTS:
+                        print(f"  ! Unknown gas '{g}' (skip).")
+                        continue
+                    p_token, _subdir, var_candidates = S5P_PRODUCTS[g]
+                    process_s5p_gas(
+                        token,
+                        g,
+                        p_token,
+                        var_candidates,
+                        bbox,
+                        region_name=region_name,
+                        start_date=day_start,
+                        end_date=day_end,
+                        top=args.top,
+                        out_root=ROOT_DIR,
+                        qa_thresh=args.qa,
+                        mongo_s5p_coll=s5p_coll,
+                    )
+
+            current += timedelta(days=1)
+
+    else:
+        # ORIGINAL RANGE MODE (single query per gas/region)
+        if region_keys:
+            # use predefined Tunisian regions
+            for reg in region_keys:
+                bbox = REGION_BBOXES.get(reg)
+                if bbox is None:
+                    print(f"  ! Unknown region '{reg}' (skip).")
+                    continue
+                print(f"\n=== Processing region '{reg}' with bbox {bbox} ===")
+                for g in gases:
+                    if g not in S5P_PRODUCTS:
+                        print(f"  ! Unknown gas '{g}' (skip).")
+                        continue
+                    p_token, _subdir, var_candidates = S5P_PRODUCTS[g]
+                    process_s5p_gas(
+                        token,
+                        g,
+                        p_token,
+                        var_candidates,
+                        bbox,
+                        region_name=reg,
+                        start_date=start_iso,
+                        end_date=end_iso,
+                        top=args.top,
+                        out_root=ROOT_DIR,
+                        qa_thresh=args.qa,
+                        mongo_s5p_coll=s5p_coll,
+                    )
+        else:
+            # manual bbox
+            bbox = (args.minx, args.miny, args.maxx, args.maxy)
+            region_name = args.region_name
+            print(
+                f"\n=== Processing manual region '{region_name}' "
+                f"with bbox {bbox} ==="
+            )
             for g in gases:
                 if g not in S5P_PRODUCTS:
                     print(f"  ! Unknown gas '{g}' (skip).")
@@ -325,38 +472,14 @@ def main():
                     p_token,
                     var_candidates,
                     bbox,
-                    region_name=reg,
-                    start_date=start_date,
-                    end_date=end_date,
+                    region_name=region_name,
+                    start_date=start_iso,
+                    end_date=end_iso,
                     top=args.top,
                     out_root=ROOT_DIR,
                     qa_thresh=args.qa,
                     mongo_s5p_coll=s5p_coll,
                 )
-    else:
-        # manual bbox
-        bbox = (args.minx, args.miny, args.maxx, args.maxy)
-        region_name = args.region_name
-        print(f"\n=== Processing manual region '{region_name}' with bbox {bbox} ===")
-        for g in gases:
-            if g not in S5P_PRODUCTS:
-                print(f"  ! Unknown gas '{g}' (skip).")
-                continue
-            p_token, _subdir, var_candidates = S5P_PRODUCTS[g]
-            process_s5p_gas(
-                token,
-                g,
-                p_token,
-                var_candidates,
-                bbox,
-                region_name=region_name,
-                start_date=start_date,
-                end_date=end_date,
-                top=args.top,
-                out_root=ROOT_DIR,
-                qa_thresh=args.qa,
-                mongo_s5p_coll=s5p_coll,
-            )
 
     if mongo_client:
         try:
