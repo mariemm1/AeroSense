@@ -94,3 +94,36 @@ export interface LatestS3LSTResponse {
   top: number;
   results: S3LSTDocument[];
 }
+
+export interface ForecastResponse {
+  region: string;
+  date: string;
+  NO2: number;
+  CO: number;
+  CH4: number;
+  O3: number;
+  SO2: number;
+  LST_C: number;
+
+  // NEW – optional (backend may or may not return them)
+  aqi_class?: string;
+  aqi_class_id?: number;
+  aqi_probabilities?: {
+    '0': number;
+    '1': number;
+    '2': number;
+  };
+}
+
+
+export interface AQIResponse {
+  region: string;
+  date: string;
+  class_id: number;
+  class_name: string; // "Good" | "Moderate" | "Unhealthy"
+  probabilities: {
+    '0': number; // Good
+    '1': number; // Moderate
+    '2': number; // Unhealthy
+  };
+}

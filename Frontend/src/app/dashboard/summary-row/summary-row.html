@@ -1,0 +1,21 @@
+<section class="section">
+  <div class="summary-grid">
+    <app-card
+      *ngFor="let s of cards"
+      [hidHeader]="true"
+      [options]="false"
+      cardClass="panel-card summary-card"
+    >
+      <div class="summary-card-inner">
+        <div class="summary-title">{{ s.title }}</div>
+        <div class="summary-value">{{ s.value }}</div>
+        <div class="summary-label">{{ s.label }}</div>
+        <div class="summary-trend" [ngClass]="s.trend">
+          <span *ngIf="s.trend === 'up'">▲ Improving</span>
+          <span *ngIf="s.trend === 'down'">▼ Getting worse</span>
+          <span *ngIf="s.trend === 'neutral'">■ Stable</span>
+        </div>
+      </div>
+    </app-card>
+  </div>
+</section>

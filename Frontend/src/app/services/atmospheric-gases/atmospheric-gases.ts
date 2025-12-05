@@ -6,7 +6,9 @@ import { Observable } from 'rxjs';
 
 import {
   LatestS5PResponse,
-  LatestS3LSTResponse
+  LatestS3LSTResponse,
+  ForecastResponse,
+  AQIResponse
 } from '../../models/atmospheric-gases.model';
 
 @Injectable({
@@ -53,6 +55,36 @@ export class AtmosphericGasesService {
 
     return this.http.get<LatestS3LSTResponse>(
       `${this.baseUrl}/api/s3/lst/latest/`,
+      { params }
+    );
+  }
+
+  /**
+   * GET /api/forecast/?region=&last_date=
+   * Backend should:
+   *  - use latest data for this region
+   *  - predict "tomorrow"
+   *  - optionally return class_name / probabilities for forecasted air
+   */
+  getForecast(region: string, lastDate?: string): Observable<ForecastResponse> {
+    let params = new HttpParams().set('region', region.toLowerCase());
+    if (lastDate) {
+      params = params.set('last_date', lastDate);
+    }
+    return this.http.get<ForecastResponse>(
+      `${this.baseUrl}/api/forecast/`,
+      { params }
+    );
+  }
+
+  /**
+   * GET /api/aqi/?region=
+   * Backend should classify latest gases + LST for this region.
+   */
+  getAQI(region: string): Observable<AQIResponse> {
+    const params = new HttpParams().set('region', region.toLowerCase());
+    return this.http.get<AQIResponse>(
+      `${this.baseUrl}/api/aqi/`,
       { params }
     );
   }

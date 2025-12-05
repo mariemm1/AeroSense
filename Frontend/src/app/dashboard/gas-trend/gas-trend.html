@@ -1,0 +1,40 @@
+<section class="section">
+  <app-card [options]="false" cardClass="panel-card">
+    <div class="card-header-inline">
+      <div>
+        <div class="chart-title">Weekly AQI trend – selected gas</div>
+        <div class="chart-subtitle">
+          Region: <span class="pill-region">{{ regionId }}</span>
+        </div>
+      </div>
+
+      <div class="chart-controls">
+        <label class="label-gas">
+          Gas
+          <select [value]="selectedGasKey" (change)="onGasChange($event)">
+            <option *ngFor="let g of availableGases" [value]="g">
+              {{ gasMeta[g]?.label || g }}
+            </option>
+          </select>
+        </label>
+        <div class="chart-stats">
+          <span>Mean: {{ selectedGasStats.mean | number:'1.2-2' }}</span>
+          <span>Min: {{ selectedGasStats.min | number:'1.2-2' }}</span>
+          <span>Max: {{ selectedGasStats.max | number:'1.2-2' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <apx-chart
+      [series]="chart.series!"
+      [chart]="chart.chart!"
+      [stroke]="chart.stroke!"
+      [dataLabels]="chart.dataLabels!"
+      [xaxis]="chart.xaxis!"
+      [yaxis]="chart.yaxis!"
+      [colors]="chart.colors!"
+      [grid]="chart.grid!"
+      [legend]="chart.legend!"
+    ></apx-chart>
+  </app-card>
+</section>

@@ -1,0 +1,48 @@
+<section class="section">
+  <div class="section-header">
+    <h3>Key pollutants – latest snapshot</h3>
+    <span class="section-subtitle">Last processed satellite pass</span>
+  </div>
+
+  <div class="aqi-grid">
+    <app-card
+      *ngFor="let card of cards"
+      [hidHeader]="true"
+      [options]="false"
+      [cardClass]="'aqi-card ' + card.bgClass"
+    >
+      <div class="aqi-card-inner">
+        <div class="aqi-card-header">
+          <span class="pollutant">{{ card.pollutant }}</span>
+
+          <span
+            class="level-pill"
+            [ngClass]="(card.level || '').toLowerCase().replace(' ', '-')"
+          >
+            {{ card.level }}
+          </span>
+        </div>
+
+        <div class="aqi-card-value">
+          <span class="value">
+            {{
+              card.value !== null && card.value !== undefined
+                ? (card.value | number:'1.1-1')
+                : 'N/A'
+            }}
+          </span>
+          <span
+            class="unit"
+            *ngIf="card.value !== null && card.value !== undefined"
+          >
+            {{ card.unit }}
+          </span>
+        </div>
+
+        <div class="aqi-card-message" *ngIf="card.message">
+          {{ card.message }}
+        </div>
+      </div>
+    </app-card>
+  </div>
+</section>

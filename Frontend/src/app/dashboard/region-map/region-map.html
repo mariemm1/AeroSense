@@ -1,0 +1,72 @@
+<section class="section">
+  <app-card
+    cardTitle="AQI map – Tunisia"
+    [options]="false"
+    cardClass="panel-card panel-map"
+  >
+    <div class="map-card-body">
+      <div class="map-wrapper">
+        <!-- Leaflet map -->
+        <div #mapContainer class="leaflet-map"></div>
+
+        <!-- Legend overlay (Good / Moderate / Unhealthy / No data) -->
+        <aside class="map-legend">
+          <h4>AQI classes</h4>
+          <ul>
+            <li>
+              <span class="legend-dot good"></span>
+              <span class="legend-label">Good (class 0)</span>
+            </li>
+            <li>
+              <span class="legend-dot moderate"></span>
+              <span class="legend-label">Moderate (class 1)</span>
+            </li>
+            <li>
+              <span class="legend-dot unhealthy"></span>
+              <span class="legend-label">Unhealthy (class 2)</span>
+            </li>
+            <li>
+              <span class="legend-dot nodata"></span>
+              <span class="legend-label">No model data</span>
+            </li>
+          </ul>
+          <p class="legend-note">
+            Each circle shows the current ML AQI classification
+            for a Tunisian region. Click a circle to see details.
+          </p>
+        </aside>
+
+        <!-- Caption overlay in the bottom-left -->
+        <div class="map-caption-overlay">
+          <!-- Prefer all-region caption -->
+          <ng-container *ngIf="aqiRegions as regions; else singleOrNo">
+            <p class="map-caption">
+              Latest model classification for
+              <strong>{{ regions.length }}</strong> Tunisian regions.
+              Colors follow the legend (green = good, yellow = moderate, red = unhealthy).
+            </p>
+          </ng-container>
+
+          <ng-template #singleOrNo>
+            <p class="map-caption" *ngIf="aqi; else noModel">
+              Model classification for
+              <strong>{{ aqi.region }}</strong> on
+              <strong>{{ aqi.date }}</strong>:
+              <strong>{{ aqi.class_name }}</strong>
+              (Good: {{ aqi.probabilities['0'] | percent:'1.0-0' }},
+              Moderate: {{ aqi.probabilities['1'] | percent:'1.0-0' }},
+              Unhealthy: {{ aqi.probabilities['2'] | percent:'1.0-0' }}).
+            </p>
+          </ng-template>
+
+          <ng-template #noModel>
+            <p class="map-caption">
+              As soon as your model returns AQI classes for each region,
+              this map will display one colored circle per Tunisian region.
+            </p>
+          </ng-template>
+        </div>
+      </div>
+    </div>
+  </app-card>
+</section>
