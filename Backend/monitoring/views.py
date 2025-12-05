@@ -14,6 +14,14 @@ from rest_framework.response import Response
 from rest_framework import status
 
 from .models import User, slugify_username, ContactMessage
+from Data.ExtractData_IAModel.multivar_forecast import (
+    forecast_region_next_day_dict,
+)
+from Data.ExtractData_IAModel.aqi_service import (
+    classify_region_latest_window,
+    classify_forecast_for_region,
+)
+
 
 logger = logging.getLogger(__name__)
 
@@ -553,3 +561,90 @@ def latest_s3_lst(request):
             client.close()
         except Exception:
             pass
+
+# ======================
+#   FORECAST API (LSTM)
+# ======================
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def forecast_gases_next_day(request):
+    """
+    GET /api/forecast/?region=ariana&last_date=2023-12-31
+    """
+    region = (request.query_params.get("region") or "").strip().lower()
+    last_date = (request.query_params.get("last_date") or "").strip() or None
+
+    if not region:
+        return Response({"error": "region query parameter is required."}, status=400)
+
+    try:
+        # 1) numeric multivariate forecast (gases + LST_C + date)
+        forecast = forecast_region_next_day_dict(region=region, last_date=last_date)
+
+        # 2) classification of that forecasted day using AQI LSTM
+        try:
+            aqi_forecast = classify_forecast_for_region(region, forecast)
+        except ValueError as e:
+            # not enough history → just return forecast without AQI
+            aqi_forecast = None
+    except FileNotFoundError as e:
+        logger.error(f"Forecast artifacts missing: {e}")
+        return Response(
+            {"error": "Forecast model artifacts not found. Did you train the model?"},
+            status=500,
+        )
+    except Exception as e:
+        logger.error(f"Forecast internal error: {type(e).__name__}: {e}")
+        return Response({"error": "Internal forecast error."}, status=500)
+
+    # merge classification into response
+    if aqi_forecast is not None:
+        forecast["aqi_class"] = aqi_forecast["class_name"]
+        forecast["aqi_class_id"] = aqi_forecast["class_id"]
+        forecast["aqi_probabilities"] = aqi_forecast["probabilities"]
+
+    return Response(forecast, status=200)
+
+
+
+# ======================
+#   AQI CLASSIFICATION API
+# ======================
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def aqi_latest_classification(request):
+    """
+    GET /api/aqi/?region=ariana
+
+    Returns latest AQI class for the given region:
+    {
+      "region": "ariana",
+      "date": "2022-12-31",
+      "class_id": 1,
+      "class_name": "Moderate",
+      "probabilities": { "0": ..., "1": ..., "2": ... }
+    }
+    """
+    region = (request.query_params.get("region") or "").strip().lower()
+
+    if not region:
+        return Response({"error": "region query parameter is required."}, status=400)
+
+    try:
+        data = classify_region_latest_window(region)
+    except FileNotFoundError as e:
+        logger.error(f"AQI artifacts missing: {e}")
+        return Response(
+            {"error": "AQI classifier artifacts not found. Did you train the model?"},
+            status=500,
+        )
+    except ValueError as e:
+        logger.error(f"AQI input error: {e}")
+        return Response({"error": str(e)}, status=400)
+    except Exception as e:
+        logger.error(f"AQI internal error: {type(e).__name__}: {e}")
+        return Response({"error": "Internal AQI classification error."}, status=500)
+
+    return Response(data, status=200)
