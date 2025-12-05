@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3 
 # -*- coding: utf-8 -*-
 
 """
@@ -59,18 +59,45 @@ DOWNLOAD_URL_TPL = (
     "https://download.dataspace.copernicus.eu/odata/v1/Products({product_id})/$value"
 )
 
-# Whole Tunisia (approx) – original default
+# Whole Tunisia (approx) – country-wide AOI
 AOI_BBOX = (7.5, 30.0, 12.0, 37.5)
 
-# Approximate bboxes for some Tunisian governorates
-# → You can refine these later with official shapefiles.
+# ------------------------------------------------------------------
+# Approximate bboxes for ALL 24 Tunisian governorates + whole Tunisia
+# ------------------------------------------------------------------
 REGION_BBOXES = {
+    # whole country
     "tunisia": AOI_BBOX,
-    "ariana": (10.0, 36.7, 10.35, 37.0),
-    "manouba": (9.8, 36.6, 10.2, 37.1),
-    "siliana": (8.9, 35.8, 10.0, 36.7),
-    "tozeur": (7.5, 33.4, 9.0, 34.2),
-    # add more here...
+
+    # northern & coastal governorates
+    "tunis":      (9.68, 36.31, 10.68, 37.31),
+    "ariana":     (9.90, 36.60, 10.40, 37.10),
+    "ben_arous":  (10.00, 36.50, 10.60, 37.10),
+    "manouba":    (9.80, 36.60, 10.20, 37.10),
+    "bizerte":    (9.10, 36.80, 10.10, 37.80),
+    "nabeul":     (10.30, 36.30, 11.10, 37.10),
+    "zaghouan":   (9.60, 35.90, 10.40, 36.90),
+    "beja":       (8.50, 35.90, 9.50, 36.90),
+    "jendouba":   (8.10, 35.90, 9.10, 36.90),
+    "kef":        (8.30, 35.40, 9.30, 36.40),
+    "siliana":    (8.40, 35.60, 9.40, 36.60),
+
+    # centre
+    "kairouan":   (9.70, 35.00, 10.70, 36.00),
+    "sousse":     (10.20, 35.30, 10.90, 36.10),
+    "monastir":   (10.40, 35.20, 11.20, 36.00),
+    "mahdia":     (10.10, 34.90, 11.00, 35.70),
+    "sidi_bouzid":(8.30, 34.50, 10.00, 35.60),
+    "kasserine":  (8.20, 34.50, 9.60, 35.80),
+    "gafsa":      (8.20, 34.00, 9.80, 35.20),
+
+    # south & sahara
+    "sfax":       (10.20, 34.20, 11.20, 35.00),
+    "gabes":      (9.70, 33.40, 10.80, 34.40),
+    "medenine":   (10.00, 32.50, 11.50, 33.90),
+    "tataouine":  (9.00, 31.50, 11.30, 33.30),
+    "kebili":     (7.80, 32.50, 9.50, 34.00),
+    "tozeur":     (7.50, 33.40, 9.00, 34.20),
 }
 
 # Output folders (relative to where scripts are run)
@@ -188,6 +215,11 @@ def auth_token(username: str, password: str) -> str:
 
 def odata_search(token, collection_name, product_token, footprint_wkt,
                  start_date, end_date, top=1):
+    """
+    Safe OData search:
+      - on HTTP/connection error -> log + return []
+      - never raises, so pipelines continue.
+    """
     headers = {"Authorization": f"Bearer {token}"}
     filter_q = (
         f"Collection/Name eq '{collection_name}' and "
@@ -197,26 +229,66 @@ def odata_search(token, collection_name, product_token, footprint_wkt,
         f"ContentDate/End le {end_date}"
     )
     params = {"$filter": filter_q, "$top": top, "$format": "json"}
-    r = requests.get(CATALOG_URL, headers=headers, params=params, timeout=120)
-    r.raise_for_status()
-    items = r.json().get("value", [])
-    return [item["Id"] for item in items]
+
+    try:
+        r = requests.get(CATALOG_URL, headers=headers, params=params, timeout=120)
+        try:
+            r.raise_for_status()
+        except requests.exceptions.HTTPError:
+            print(f"  ! OData search HTTP status {r.status_code}")
+            try:
+                print("    text:", r.text[:400])
+            except Exception:
+                pass
+            return []
+    except requests.exceptions.RequestException as e:
+        print("  ! OData search network/error:", e)
+        return []
+
+    try:
+        items = r.json().get("value", [])
+    except Exception as e:
+        print("  ! OData JSON parse error:", e)
+        return []
+
+    return [item.get("Id") for item in items if "Id" in item]
 
 
 def download_product(token, product_id, out_path: Path):
-    headers = {"Authorization": f"Bearer {token}"}
-    url = DOWNLOAD_URL_TPL.format(product_id=product_id)
+    """
+    Safe download:
+      - if file already exists: reuse
+      - on HTTP/connection error -> log + return None (caller must skip)
+    """
     ensure_dir(out_path.parent)
+
     if out_path.exists():
         print(f"  • exists: {out_path.name}")
         return out_path
 
-    with requests.get(url, headers=headers, stream=True, timeout=600) as resp:
-        resp.raise_for_status()
-        with open(out_path, "wb") as f:
-            for chunk in resp.iter_content(1 << 20):
-                if chunk:
-                    f.write(chunk)
+    headers = {"Authorization": f"Bearer {token}"}
+    url = DOWNLOAD_URL_TPL.format(product_id=product_id)
+
+    try:
+        with requests.get(url, headers=headers, stream=True, timeout=600) as resp:
+            try:
+                resp.raise_for_status()
+            except requests.exceptions.HTTPError:
+                print(f"  ! download HTTP status {resp.status_code} for {product_id}")
+                try:
+                    print("    text:", resp.text[:400])
+                except Exception:
+                    pass
+                return None
+
+            with open(out_path, "wb") as f:
+                for chunk in resp.iter_content(1 << 20):
+                    if chunk:
+                        f.write(chunk)
+    except requests.exceptions.RequestException as e:
+        print(f"  ! download network/error for {product_id}: {e}")
+        return None
+
     print(f"  ✓ downloaded: {out_path.name}")
     return out_path
 

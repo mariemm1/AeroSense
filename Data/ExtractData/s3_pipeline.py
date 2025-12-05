@@ -10,7 +10,7 @@ Similar structure to s5p_pipeline.py but only for LST.
 from __future__ import annotations
 
 import argparse
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 import os
 
@@ -50,6 +50,15 @@ from pipeline_common import (
 
 import numpy as np
 import pandas as pd
+
+
+def parse_date_only(s: str):
+    """
+    Helper: get a date (YYYY-MM-DD) from different ISO-like strings.
+    Accepts 'YYYY-MM-DD' or full 'YYYY-MM-DDTHH:MM:SSZ'.
+    """
+    ds = s[:10]
+    return datetime.strptime(ds, "%Y-%m-%d").date()
 
 
 def process_s3_lst(
@@ -94,12 +103,15 @@ def process_s3_lst(
 
     for pid in product_ids:
         pkg_path = pkg_dir / f"S3_LST_{region_name}_{pid}.zip"
-        download_product(token, pid, pkg_path)
+        result_path = download_product(token, pid, pkg_path)
+        if result_path is None:
+            # download failed
+            continue
 
-        if is_zip_file(pkg_path):
+        if is_zip_file(result_path):
             out_folder = work_dir / f"S3_LST_{region_name}_{pid}"
             if not out_folder.exists() or not any(out_folder.rglob("*.nc")):
-                extract_zip_to_folder(pkg_path, out_folder)
+                extract_zip_to_folder(result_path, out_folder)
 
             tree_print(out_folder, max_files=150)
 
@@ -153,7 +165,7 @@ def process_s3_lst(
 
         else:
             try:
-                ds = open_nc_any(pkg_path)
+                ds = open_nc_any(result_path)
                 var = pick_first_var(ds, S3_LST["var_candidates"])
                 lat = pick_first_var(ds, S3_LST["lat_candidates"])
                 lon = pick_first_var(ds, S3_LST["lon_candidates"])
@@ -163,7 +175,7 @@ def process_s3_lst(
                     print("  ! No LST pixels fell inside your bbox for this file.")
                     ds.close()
                     continue
-                date_str = infer_scene_date(ds, pkg_path.name)
+                date_str = infer_scene_date(ds, result_path.name)
                 ds.close()
             except Exception as e:
                 print(f"  ! LST var selection error (single .nc): {e}")
@@ -197,7 +209,7 @@ def process_s3_lst(
             "stats": stats,
             "files": {
                 "tif": str(tif_path),
-                "raw_pkg": str(pkg_path),
+                "raw_pkg": str(result_path),
             },
             "params": {
                 "product_token": S3_LST["token"],
@@ -235,7 +247,7 @@ def main():
         description="Sentinel-3 LST daily downloader/processor "
                     "(CDSE + optional MongoDB, per Tunisian region)."
     )
-    
+
     parser.add_argument(
         "--user",
         default=os.getenv("CDSE_USER"),
@@ -246,7 +258,6 @@ def main():
         default=os.getenv("CDSE_PASSWORD"),
         help="CDSE password (default from CDSE_PASSWORD)",
     )
-
 
     parser.add_argument("--minx", type=float, default=AOI_BBOX[0])
     parser.add_argument("--miny", type=float, default=AOI_BBOX[1])
@@ -261,8 +272,9 @@ def main():
     parser.add_argument(
         "--regions",
         default="tunisia",
-        help="Comma list of predefined regions (keys of REGION_BBOXES). "
-             "If non-empty, overrides manual bbox.",
+        help=("Comma list of predefined regions (keys of REGION_BBOXES) "
+              "or 'all' for every predefined region. "
+              "If non-empty, overrides manual bbox."),
     )
 
     parser.add_argument("--start", default=None,
@@ -271,6 +283,17 @@ def main():
                         help="ISO end (default=yesterday 23:59Z)")
     parser.add_argument("--top", type=int, default=1,
                         help="Latest N scenes per product")
+
+    # DAILY mode
+    parser.add_argument(
+        "--daily",
+        action="store_true",
+        help=(
+            "If set, loop day-by-day between start and end, "
+            "using a 00:00Z–23:59Z window for each day. "
+            "Typically use --top 1 in this mode."
+        ),
+    )
 
     parser.add_argument(
         "--mongo-uri",
@@ -290,13 +313,18 @@ def main():
 
     args = parser.parse_args()
 
+    # base time window
     if args.start and args.end:
-        start_date, end_date, run_day = args.start, args.end, args.start[:10]
+        start_iso, end_iso, run_day = args.start, args.end, args.start[:10]
     else:
-        start_date, end_date, run_day = yesterday_utc_range()
+        start_iso, end_iso, run_day = yesterday_utc_range()
 
-    print(f"Time: {start_date} → {end_date} (day {run_day})")
+    print(f"Time: {start_iso} → {end_iso} (day {run_day})")
     print(f"TOP per product: {args.top}")
+    if args.daily:
+        print("Mode: DAILY (loop per day)")
+    else:
+        print("Mode: RANGE (single query per region)")
 
     ensure_dir(ROOT_DIR)
     ensure_dir(TIF_DIR)
@@ -320,43 +348,107 @@ def main():
     token = auth_token(args.user, args.password)
     print("✓ Auth OK")
 
+    # Resolve regions
     region_keys = [
         r.strip().lower() for r in args.regions.split(",") if r.strip()
     ]
+
+    if "all" in region_keys:
+        region_keys = list(REGION_BBOXES.keys())
+
     if not region_keys:
         region_keys = []
 
-    if region_keys:
-        for reg in region_keys:
-            bbox = REGION_BBOXES.get(reg)
-            if bbox is None:
-                print(f"  ! Unknown region '{reg}' (skip).")
-                continue
-            print(f"\n=== Processing region '{reg}' with bbox {bbox} ===")
+    # DAILY MODE
+    if args.daily and args.start and args.end:
+        start_date = parse_date_only(start_iso)
+        end_date = parse_date_only(end_iso)
+
+        if start_date > end_date:
+            raise ValueError("start date must be <= end date in daily mode.")
+
+        current = start_date
+        while current <= end_date:
+            day_start = f"{current.isoformat()}T00:00:00Z"
+            day_end = f"{current.isoformat()}T23:59:59Z"
+            print(
+                f"\n--- DAILY window {day_start} → {day_end} "
+                f"({current.isoformat()}) ---"
+            )
+
+            if region_keys:
+                for reg in region_keys:
+                    bbox = REGION_BBOXES.get(reg)
+                    if bbox is None:
+                        print(f"  ! Unknown region '{reg}' (skip).")
+                        continue
+                    print(f"\n=== Processing region '{reg}' with bbox {bbox} ===")
+                    process_s3_lst(
+                        token,
+                        bbox,
+                        region_name=reg,
+                        start_date=day_start,
+                        end_date=day_end,
+                        top=args.top,
+                        out_root=ROOT_DIR,
+                        mongo_s3_coll=s3_coll,
+                    )
+            else:
+                bbox = (args.minx, args.miny, args.maxx, args.maxy)
+                region_name = args.region_name
+                print(
+                    f"\n=== Processing manual region '{region_name}' "
+                    f"with bbox {bbox} ==="
+                )
+                process_s3_lst(
+                    token,
+                    bbox,
+                    region_name=region_name,
+                    start_date=day_start,
+                    end_date=day_end,
+                    top=args.top,
+                    out_root=ROOT_DIR,
+                    mongo_s3_coll=s3_coll,
+                )
+
+            current += timedelta(days=1)
+
+    else:
+        # RANGE MODE (single query)
+        if region_keys:
+            for reg in region_keys:
+                bbox = REGION_BBOXES.get(reg)
+                if bbox is None:
+                    print(f"  ! Unknown region '{reg}' (skip).")
+                    continue
+                print(f"\n=== Processing region '{reg}' with bbox {bbox} ===")
+                process_s3_lst(
+                    token,
+                    bbox,
+                    region_name=reg,
+                    start_date=start_iso,
+                    end_date=end_iso,
+                    top=args.top,
+                    out_root=ROOT_DIR,
+                    mongo_s3_coll=s3_coll,
+                )
+        else:
+            bbox = (args.minx, args.miny, args.maxx, args.maxy)
+            region_name = args.region_name
+            print(
+                f"\n=== Processing manual region '{region_name}' "
+                f"with bbox {bbox} ==="
+            )
             process_s3_lst(
                 token,
                 bbox,
-                region_name=reg,
-                start_date=start_date,
-                end_date=end_date,
+                region_name=region_name,
+                start_date=start_iso,
+                end_date=end_iso,
                 top=args.top,
                 out_root=ROOT_DIR,
                 mongo_s3_coll=s3_coll,
             )
-    else:
-        bbox = (args.minx, args.miny, args.maxx, args.maxy)
-        region_name = args.region_name
-        print(f"\n=== Processing manual region '{region_name}' with bbox {bbox} ===")
-        process_s3_lst(
-            token,
-            bbox,
-            region_name=region_name,
-            start_date=start_date,
-            end_date=end_date,
-            top=args.top,
-            out_root=ROOT_DIR,
-            mongo_s3_coll=s3_coll,
-        )
 
     if mongo_client:
         try:

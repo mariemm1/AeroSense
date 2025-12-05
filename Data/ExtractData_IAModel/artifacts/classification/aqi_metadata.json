@@ -1,0 +1,24 @@
+{
+  "seq_len": 60,
+  "n_features": 10,
+  "feature_names": [
+    "NO2",
+    "CO",
+    "CH4",
+    "O3",
+    "SO2",
+    "LST_C",
+    "gas_mean",
+    "gas_sum",
+    "sin_doy",
+    "cos_doy"
+  ],
+  "n_classes": 3,
+  "class_names": {
+    "0": "Good",
+    "1": "Moderate",
+    "2": "Unhealthy"
+  },
+  "train_frac": 0.6,
+  "val_frac": 0.2
+}
