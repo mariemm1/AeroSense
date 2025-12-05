@@ -1,0 +1,227 @@
+/* SECTION TITLE */
+
+.section {
+  margin-bottom: 1.25rem;
+}
+
+.section-header {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 0.7rem;
+}
+
+.section-header h3 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #eef2ff;
+}
+
+.section-subtitle {
+  font-size: 0.75rem;
+  color: #a3b4de;
+}
+
+/* GRID LAYOUT */
+
+.aqi-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+/* INTEGRATION WITH app-card */
+
+.aqi-card {
+  border: none;
+  background: transparent;
+}
+
+/* make inner ng-template of app-card transparent */
+.aqi-card .card,
+.aqi-card .card-body {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+}
+
+/* CARD INNER – glassy pill on dark background */
+
+.aqi-card-inner {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: 0.9rem 1.1rem;
+  border-radius: 1.1rem;
+  background: rgba(4, 10, 24, 0.96);
+  color: #e6eeff;
+  box-shadow: 0 14px 30px rgba(1, 5, 14, 0.75);
+  overflow: hidden;
+  transition: transform 0.18s ease-out, box-shadow 0.18s ease-out;
+}
+
+/* soft hover lift */
+.aqi-card-inner:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 36px rgba(1, 5, 14, 0.95);
+}
+
+/* top colored strip driven by pollutant class */
+
+.aqi-card-inner::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 4px;
+  opacity: 0.95;
+}
+
+/* each pollutant gets its gradient stripe + subtle glow */
+.aqi-bg-no2 .aqi-card-inner::before {
+  background: linear-gradient(135deg, #4da3ff, #2b7bff);
+}
+.aqi-bg-o3 .aqi-card-inner::before {
+  background: linear-gradient(135deg, #2ed8b6, #00b894);
+}
+.aqi-bg-so2 .aqi-card-inner::before {
+  background: linear-gradient(135deg, #26c6da, #00acc1);
+}
+.aqi-bg-co .aqi-card-inner::before {
+  background: linear-gradient(135deg, #ffcf6b, #ffb64d);
+}
+.aqi-bg-ch4 .aqi-card-inner::before {
+  background: linear-gradient(135deg, #a768f3, #7e57c2);
+}
+.aqi-bg-lst .aqi-card-inner::before {
+  background: linear-gradient(135deg, #ff7675, #ff4b5c);
+}
+
+/* slight colored shadow per pollutant */
+.aqi-bg-no2 .aqi-card-inner {
+  box-shadow: 0 14px 30px rgba(77, 163, 255, 0.35);
+}
+.aqi-bg-o3 .aqi-card-inner {
+  box-shadow: 0 14px 30px rgba(46, 216, 182, 0.35);
+}
+.aqi-bg-so2 .aqi-card-inner {
+  box-shadow: 0 14px 30px rgba(38, 198, 218, 0.35);
+}
+.aqi-bg-co .aqi-card-inner {
+  box-shadow: 0 14px 30px rgba(255, 207, 107, 0.35);
+}
+.aqi-bg-ch4 .aqi-card-inner {
+  box-shadow: 0 14px 30px rgba(167, 104, 243, 0.35);
+}
+.aqi-bg-lst .aqi-card-inner {
+  box-shadow: 0 14px 30px rgba(255, 118, 117, 0.35);
+}
+
+/* HEADER: pollutant + level pill */
+
+.aqi-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.pollutant {
+  color: #c8d3ff;
+}
+
+
+
+/* base pill style */
+.level-pill {
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: 1px solid rgba(159, 178, 221, 0.6);
+  background: rgba(11, 19, 40, 0.9);
+  color: #e6eeff;
+}
+
+/* map text values ("GOOD", "MODERATE", ...) -> colors
+   via ngClass: good, moderate, unhealthy, very-unhealthy, no-data */
+
+.level-pill.good {
+  border-color: rgba(46, 216, 182, 0.8);
+  background: rgba(46, 216, 182, 0.15);
+  color: #aefbf0;
+}
+
+.level-pill.moderate {
+  border-color: rgba(255, 207, 107, 0.85);
+  background: rgba(255, 207, 107, 0.18);
+  color: #ffe9b5;
+}
+
+.level-pill.unhealthy {
+  border-color: rgba(255, 118, 117, 0.9);
+  background: rgba(255, 118, 117, 0.2);
+  color: #ffd0cf;
+}
+
+.level-pill.very-unhealthy {
+  border-color: rgba(255, 75, 92, 0.9);
+  background: rgba(255, 75, 92, 0.22);
+  color: #ffe2e5;
+}
+
+.level-pill.no-data {
+  border-color: rgba(158, 167, 196, 0.7);
+  background: rgba(130, 139, 170, 0.2);
+  color: #d7ddf0;
+}
+
+/* VALUE + UNIT */
+
+.aqi-card-value {
+  display: flex;
+  align-items: baseline;
+  gap: 0.3rem;
+  margin-top: 0.1rem;
+}
+
+.aqi-card-value .value {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.aqi-card-value .unit {
+  font-size: 0.7rem;
+  color: #9fb2dd;
+}
+
+/* MESSAGE */
+
+.aqi-card-message {
+  margin-top: 0.4rem;
+  font-size: 0.7rem;
+  line-height: 1.35;
+  color: #a8b6e3;
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 1100px) {
+  .aqi-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .aqi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

@@ -1,0 +1,285 @@
+/* SECTION TITLE (align with rest) */
+.section {
+  margin-bottom: 1.25rem;
+}
+
+.section-header {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 0.8rem;
+}
+
+.section-header h3 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #eef2ff;
+}
+
+.section-subtitle {
+  font-size: 0.75rem;
+  color: #a3b4de;
+}
+
+/* TWO CARDS NEXT TO EACH OTHER */
+.forecast-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1.6fr;
+  gap: 1rem;
+  align-items: stretch;
+}
+
+@media (max-width: 1100px) {
+  .forecast-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* CARD SHELL – we keep the default white from app-card,
+   but soften shadow and radius for a more "card" feeling */
+.forecast-card {
+  border: none;
+  background: #f9faff;
+  box-shadow: 0 18px 40px rgba(9, 16, 39, 0.16);
+  border-radius: 1.15rem;
+}
+
+/* INNER CONTENT – darker text for readability */
+.forecast-card-inner {
+  padding: 1.05rem 1.25rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  color: #1f2942;
+}
+
+/* CARD HEADER (title + chip) */
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.card-kicker {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #8a96b5;
+  margin-bottom: 0.15rem;
+}
+
+.card-header h4 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+/* STATUS CHIP (Good / Moderate / Unhealthy) – softer colors */
+.chip {
+  padding: 0.18rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  background: rgba(15, 23, 42, 0.03);
+  border: 1px solid rgba(15, 23, 42, 0.16);
+  color: #4b587a;
+}
+
+.chip.good {
+  background: rgba(63, 200, 120, 0.12);
+  border-color: rgba(63, 200, 120, 0.7);
+  color: #2f9d63;
+}
+
+.chip.moderate {
+  background: rgba(255, 198, 92, 0.12);
+  border-color: rgba(255, 198, 92, 0.75);
+  color: #c78519;
+}
+
+.chip.bad {
+  background: rgba(233, 92, 94, 0.13);
+  border-color: rgba(233, 92, 94, 0.78);
+  color: #d7545b;
+}
+
+.chip.neutral {
+  color: #4b587a;
+}
+
+/* TODAY CARD CONTENT */
+.forecast-aqi .aqi-label {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #8a96b5;
+  margin-bottom: 0.15rem;
+}
+
+.forecast-aqi .aqi-value {
+  font-size: 1.35rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+
+.forecast-card .aqi-value.good {
+  color: #2f9d63;
+}
+
+.forecast-card .aqi-value.moderate {
+  color: #c78519;
+}
+
+.forecast-card .aqi-value.bad {
+  color: #d7545b;
+}
+
+.forecast-card .aqi-value.neutral {
+  color: #353f5c;
+}
+
+.aqi-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  font-size: 0.75rem;
+  color: #7a88a8;
+}
+
+/* PROBABILITY BARS (for both cards) */
+
+.prob-rows {
+  margin-top: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.prob-bar {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  column-gap: 0.4rem;
+  font-size: 0.78rem;
+  color: #586382;
+}
+
+.prob-bar .label {
+  min-width: 64px;
+}
+
+.prob-bar .bar {
+  position: relative;
+  height: 6px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(15, 23, 42, 0.06);
+}
+
+.prob-bar .fill {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  transform-origin: left center;
+  transition: width 0.45s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+.prob-bar .fill.good {
+  background: linear-gradient(90deg, #2f9d63, #39b88d);
+}
+
+.prob-bar .fill.moderate {
+  background: linear-gradient(90deg, #c78519, #ffb54b);
+}
+
+.prob-bar .fill.bad {
+  background: linear-gradient(90deg, #d7545b, #ff6b81);
+}
+
+.prob-bar .value {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.78rem;
+  color: #4e5a78;
+}
+
+/* FORECAST CARD DETAILS (gases + AQI) */
+
+.forecast-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.forecast-date {
+  font-size: 0.8rem;
+  color: #6f7ca0;
+}
+
+.forecast-rows {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.3rem 0.75rem;
+  font-size: 0.8rem;
+}
+
+.forecast-rows .row {
+  display: flex;
+  justify-content: space-between;
+}
+
+.forecast-rows .label {
+  color: #7a88a8;
+}
+
+.forecast-rows .value {
+  font-weight: 500;
+  color: #353f5c;
+}
+
+/* PREDICTED AQI BLOCK */
+
+.forecast-aqi-class {
+  margin-top: 0.7rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.forecast-aqi-class .label {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #8a96b5;
+  margin-bottom: 0.25rem;
+}
+
+.forecast-aqi-class .value {
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.forecast-aqi-class .value.good {
+  color: #2f9d63;
+}
+
+.forecast-aqi-class .value.moderate {
+  color: #c78519;
+}
+
+.forecast-aqi-class .value.bad {
+  color: #d7545b;
+}
+
+.forecast-aqi-class .value.neutral {
+  color: #353f5c;
+}
+
+/* HINT TEXT */
+.hint {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: #7a88a8;
+}

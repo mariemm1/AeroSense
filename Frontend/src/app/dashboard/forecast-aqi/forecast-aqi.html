@@ -1,0 +1,215 @@
+<section class="section forecast-section">
+  <div class="section-header">
+    <h3>Air quality – today &amp; tomorrow</h3>
+    <span class="section-subtitle">
+      ML-based classification from the latest satellite time series
+    </span>
+  </div>
+
+  <div class="forecast-grid">
+    <!-- TODAY / CURRENT AQI CARD -->
+    <app-card
+      [hidHeader]="true"
+      [options]="false"
+      cardClass="forecast-card"
+    >
+      <div class="forecast-card-inner">
+        <div class="card-header">
+          <div>
+            <div class="card-kicker">Today</div>
+            <h4>Current AQI</h4>
+          </div>
+
+          <span class="chip" [ngClass]="aqiColor">
+            {{ aqi?.class_name || 'No data' }}
+          </span>
+        </div>
+
+        <div class="forecast-aqi">
+          <div class="aqi-label">Current AQI class</div>
+          <div class="aqi-value" [ngClass]="aqiColor">
+            {{ aqi?.class_name || 'N/A' }}
+          </div>
+
+          <div class="aqi-meta" *ngIf="aqi as a">
+            <span>Region: <strong>{{ a.region }}</strong></span>
+            <span>Last update: {{ a.date }}</span>
+          </div>
+
+          <div class="prob-rows" *ngIf="aqi as a2">
+            <div class="prob-bar">
+              <span class="label">Good</span>
+              <div class="bar">
+                <div
+                  class="fill good"
+                  [style.width.%]="(a2.probabilities['0'] || 0) * 100"
+                ></div>
+              </div>
+              <span class="value">
+                {{ a2.probabilities['0'] | percent:'1.0-0' }}
+              </span>
+            </div>
+
+            <div class="prob-bar">
+              <span class="label">Moderate</span>
+              <div class="bar">
+                <div
+                  class="fill moderate"
+                  [style.width.%]="(a2.probabilities['1'] || 0) * 100"
+                ></div>
+              </div>
+              <span class="value">
+                {{ a2.probabilities['1'] | percent:'1.0-0' }}
+              </span>
+            </div>
+
+            <div class="prob-bar">
+              <span class="label">Unhealthy</span>
+              <div class="bar">
+                <div
+                  class="fill bad"
+                  [style.width.%]="(a2.probabilities['2'] || 0) * 100"
+                ></div>
+              </div>
+              <span class="value">
+                {{ a2.probabilities['2'] | percent:'1.0-0' }}
+              </span>
+            </div>
+          </div>
+
+          <p class="hint" *ngIf="!aqi">
+            No AQI classification available for the selected region yet.
+          </p>
+        </div>
+      </div>
+    </app-card>
+
+    <!-- TOMORROW / FORECAST CARD -->
+    <app-card
+      [hidHeader]="true"
+      [options]="false"
+      cardClass="forecast-card"
+    >
+      <div class="forecast-card-inner">
+        <div class="card-header">
+          <div>
+            <div class="card-kicker">Tomorrow</div>
+            <h4>Short-term forecast</h4>
+          </div>
+
+          <span
+            class="chip"
+            *ngIf="forecast?.aqi_class as cls"
+            [ngClass]="forecastAqiColor"
+          >
+            {{ cls }}
+          </span>
+        </div>
+
+        <div class="forecast-details" *ngIf="forecast as f; else noForecast">
+          <div class="forecast-date">
+            Forecast for <strong>{{ f.date }}</strong>
+          </div>
+
+          <div class="forecast-rows">
+            <div class="row">
+              <span class="label">NO₂</span>
+              <span class="value">
+                {{ f.NO2 | number:'1.1-2' }}
+              </span>
+            </div>
+            <div class="row">
+              <span class="label">O₃</span>
+              <span class="value">
+                {{ f.O3 | number:'1.1-2' }}
+              </span>
+            </div>
+            <div class="row">
+              <span class="label">SO₂</span>
+              <span class="value">
+                {{ f.SO2 | number:'1.1-2' }}
+              </span>
+            </div>
+            <div class="row">
+              <span class="label">CO</span>
+              <span class="value">
+                {{ f.CO | number:'1.1-2' }}
+              </span>
+            </div>
+            <div class="row">
+              <span class="label">CH₄</span>
+              <span class="value">
+                {{ f.CH4 | number:'1.1-2' }}
+              </span>
+            </div>
+            <div class="row">
+              <span class="label">LST</span>
+              <span class="value">
+                {{ f.LST_C | number:'1.1-1' }} °C
+              </span>
+            </div>
+          </div>
+
+          <div *ngIf="f.aqi_class" class="forecast-aqi-class">
+            <div class="label">Predicted AQI (tomorrow)</div>
+            <div class="value" [ngClass]="forecastAqiColor">
+              {{ f.aqi_class }}
+            </div>
+
+            <div class="prob-rows" *ngIf="f.aqi_probabilities as p">
+              <div class="prob-bar">
+                <span class="label">Good</span>
+                <div class="bar">
+                  <div
+                    class="fill good"
+                    [style.width.%]="(p['0'] || 0) * 100"
+                  ></div>
+                </div>
+                <span class="value">
+                  {{ p['0'] | percent:'1.0-0' }}
+                </span>
+              </div>
+
+              <div class="prob-bar">
+                <span class="label">Moderate</span>
+                <div class="bar">
+                  <div
+                    class="fill moderate"
+                    [style.width.%]="(p['1'] || 0) * 100"
+                  ></div>
+                </div>
+                <span class="value">
+                  {{ p['1'] | percent:'1.0-0' }}
+                </span>
+              </div>
+
+              <div class="prob-bar">
+                <span class="label">Unhealthy</span>
+                <div class="bar">
+                  <div
+                    class="fill bad"
+                    [style.width.%]="(p['2'] || 0) * 100"
+                  ></div>
+                </div>
+                <span class="value">
+                  {{ p['2'] | percent:'1.0-0' }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <p class="hint">
+            Values and AQI class are produced by your ML models using
+            the latest satellite time series for this region.
+          </p>
+        </div>
+
+        <ng-template #noForecast>
+          <p class="hint">
+            No forecast available for the selected region yet.
+          </p>
+        </ng-template>
+      </div>
+    </app-card>
+  </div>
+</section>

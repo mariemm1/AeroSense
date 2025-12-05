@@ -1,0 +1,100 @@
+<div class="layout">
+  <div class="main-panel">
+    <!-- TOP BAR -->
+    <header class="topbar">
+      <div class="topbar__left">
+        <!-- LOGO (non-clickable) -->
+        <div class="logo">
+          <div class="logo-icon">
+            <svg width="28" height="28" viewBox="0 0 100 100" fill="none">
+              <circle cx="50" cy="50" r="45" stroke="currentColor" stroke-width="8"></circle>
+              <path
+                d="M30 50 Q50 30, 70 50 Q50 70, 30 50"
+                stroke="currentColor"
+                stroke-width="6"
+                fill="none">
+              </path>
+            </svg>
+          </div>
+          <span class="logo-text">AeroSense</span>
+        </div>
+      </div>
+
+      <div class="topbar__right">
+        <div class="topbar-region">
+          <span class="label">Region</span>
+          <select [value]="selectedRegion" (change)="onRegionChange($event)">
+            <option *ngFor="let r of regions" [value]="r.id">
+              {{ r.label }}
+            </option>
+          </select>
+        </div>
+
+        <div class="topbar-user" *ngIf="userName">
+          <button
+            type="button"
+            class="user-toggle"
+            (click)="toggleUserMenu()">
+            <span class="welcome">Welcome,</span>
+            <span class="user-name">{{ userName }}</span>
+            <span class="chevron" [class.open]="isUserMenuOpen">▾</span>
+          </button>
+
+          <div class="user-dropdown" *ngIf="isUserMenuOpen">
+            <button type="button" (click)="onLogout()">Logout</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- CONTENT -->
+    <main class="content">
+      <!-- Loading / error messages -->
+      <div class="status-banner loading" *ngIf="isLoading">
+        Loading latest data for <strong>{{ selectedRegion }}</strong>…
+      </div>
+      <div class="status-banner error" *ngIf="!isLoading && errorMessage">
+        {{ errorMessage }}
+      </div>
+
+      <!-- Top hero: classification + forecast -->
+      <app-forecast-aqi
+        [forecast]="forecast"
+        [aqi]="aqi"
+      ></app-forecast-aqi>
+
+      <!-- AQI mini cards -->
+      <app-aqi-cards [cards]="aqiCards"></app-aqi-cards>
+
+      <!-- Summary KPI row -->
+      <app-summary-row [cards]="summaryCards"></app-summary-row>
+
+      <!-- Map row (full width) -->
+      <app-region-map [aqi]="aqi" [aqiRegions]="aqiRegions" [selectedRegionId]="selectedRegion"></app-region-map>
+      
+
+
+      <!-- Charts row: gas trend + LST trend next to each other -->
+      <div class="two-column charts-row">
+        <div class="col">
+          <app-gas-trend
+            [regionId]="selectedRegion"
+            [chart]="gasTrendChart"
+            [selectedGasKey]="selectedGasKey"
+            [availableGases]="availableGases"
+            [selectedGasStats]="selectedGasStats"
+            [gasMeta]="gasMeta"
+            (gasChange)="onGasSelectionChange($event)"
+          ></app-gas-trend>
+        </div>
+
+        <div class="col">
+          <app-lst-trend
+            [regionId]="selectedRegion"
+            [chart]="tempTrendChart"
+          ></app-lst-trend>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>

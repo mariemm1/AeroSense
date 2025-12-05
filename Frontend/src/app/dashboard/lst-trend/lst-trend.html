@@ -1,0 +1,24 @@
+<section class="section">
+  <app-card
+    cardTitle="Land surface temperature – weekly trend"
+    [options]="false"
+    cardClass="panel-card"
+  >
+    <div class="chart-subtitle">
+      Region: <span class="pill-region">{{ regionId }}</span>
+    </div>
+
+    <apx-chart
+      [series]="chart.series!"
+      [chart]="chart.chart!"
+      [stroke]="chart.stroke!"
+      [dataLabels]="chart.dataLabels!"
+      [xaxis]="chart.xaxis!"
+      [yaxis]="chart.yaxis!"
+      [fill]="chart.fill!"
+      [colors]="chart.colors!"
+      [grid]="chart.grid!"
+      [tooltip]="chart.tooltip!"
+    ></apx-chart>
+  </app-card>
+</section>
