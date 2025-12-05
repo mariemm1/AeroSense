@@ -39,3 +39,9 @@ rasterio>=1.4
 
 # Date handling
 python-dateutil>=2.9
+
+########################################
+# IA models (forecasting + AQI classification)
+########################################
+scikit-learn>=1.5        # StandardScaler, metrics, etc.
+tensorflow>=2.13         # Keras LSTM models (adjust if your env needs another version)
