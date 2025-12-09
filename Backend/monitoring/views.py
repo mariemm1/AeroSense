@@ -9,9 +9,11 @@ from django.urls import reverse
 from django.core.mail import send_mail
 
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
+from .auth_utils import require_jwt
+
 
 from .models import User, slugify_username, ContactMessage
 from Data.ExtractData_IAModel.multivar_forecast import (
@@ -567,7 +569,8 @@ def latest_s3_lst(request):
 # ======================
 
 @api_view(["GET"])
-@permission_classes([AllowAny])
+#@permission_classes([IsAuthenticated])
+@require_jwt
 def forecast_gases_next_day(request):
     """
     GET /api/forecast/?region=ariana&last_date=2023-12-31
@@ -613,7 +616,8 @@ def forecast_gases_next_day(request):
 # ======================
 
 @api_view(["GET"])
-@permission_classes([AllowAny])
+#@permission_classes([])
+@require_jwt
 def aqi_latest_classification(request):
     """
     GET /api/aqi/?region=ariana
